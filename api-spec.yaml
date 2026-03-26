@@ -11,6 +11,9 @@ servers:
   - url: http://localhost:8080/api/v1
     description: Local development
 
+security:
+  - bearerAuth: []
+
 paths:
   /health:
     get:
@@ -327,6 +330,11 @@ paths:
           $ref: "#/components/responses/NotFound"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
   parameters:
     projectId:
       name: projectId
