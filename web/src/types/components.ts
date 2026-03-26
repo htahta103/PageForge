@@ -10,6 +10,13 @@ export type BreakpointPropOverrides = Partial<
   Record<Exclude<BreakpointId, 'desktop'>, Record<string, unknown>>
 >
 
+/** Design-time metadata (persists with the page). Mirrors backend ComponentMetaJSON. */
+export interface ComponentMeta {
+  name?: string
+  visible?: boolean
+  locked?: boolean
+}
+
 export interface ComponentNode {
   id: ComponentId
   type: ComponentType
@@ -17,5 +24,5 @@ export interface ComponentNode {
   /** Overrides layered on `props` when tablet/mobile breakpoint is active. */
   breakpointOverrides?: BreakpointPropOverrides
   children: ComponentId[]
+  meta?: ComponentMeta
 }
-

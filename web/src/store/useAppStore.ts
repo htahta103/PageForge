@@ -4,8 +4,10 @@ import type {
   BreakpointId,
   BreakpointPropOverrides,
   ComponentId,
+  ComponentMeta,
   ComponentNode,
 } from '../types/components'
+import { getDefinition } from '../registry/registry'
 
 const ROOT_ID: ComponentId = 'root'
 
@@ -50,11 +52,34 @@ export interface AppActions {
   deleteComponents: (ids: ComponentId[]) => void
   setProp: (id: ComponentId, key: string, value: unknown) => void
   clearPropOverride: (id: ComponentId, key: string) => void
+  setMeta: (id: ComponentId, patch: Partial<ComponentMeta>) => void
   /** Move a node to destParentId at index (0-based, relative to children before the move). */
   moveNode: (draggedId: ComponentId, destParentId: ComponentId, destIndex: number) => void
 }
 
-const rootNode: ComponentNode = { id: ROOT_ID, type: 'Root', props: {}, children: [] }
+/** visible/locked default true / false when omitted */
+export function isNodeVisible(node: ComponentNode | undefined): boolean {
+  if (!node) return false
+  return node.meta?.visible !== false
+}
+
+export function isNodeLocked(node: ComponentNode | undefined): boolean {
+  return node?.meta?.locked === true
+}
+
+export function layerDisplayName(node: ComponentNode): string {
+  const n = node.meta?.name?.trim()
+  if (n) return n
+  return node.type
+}
+
+const rootNode: ComponentNode = {
+  id: ROOT_ID,
+  type: 'Root',
+  props: {},
+  children: [],
+  meta: { name: 'Root' },
+}
 
 const initialState: AppState = {
   components: { [ROOT_ID]: rootNode },
@@ -81,13 +106,14 @@ export const useAppStore = create<AppState & AppActions>()(
       addComponent: (type, parentId = ROOT_ID, initialProps) => {
         const id = globalThis.crypto?.randomUUID?.() ?? `cmp_${Date.now()}_${Math.random()}`
         const props = { ...(initialProps ?? {}) }
+        const title = getDefinition(type)?.title ?? type
         set((state) => {
           const parent = state.components[parentId]
           if (!parent) return state
           return {
             components: {
               ...state.components,
-              [id]: { id, type, props, children: [] },
+              [id]: { id, type, props, children: [], meta: { name: title } },
               [parentId]: { ...parent, children: [...parent.children, id] },
             },
             selectedIds: [id],
@@ -129,6 +155,7 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => {
           const node = state.components[id]
           if (!node) return state
+          if (isNodeLocked(node)) return state
           const bp = state.activeBreakpoint
           if (bp === 'desktop') {
             return {
@@ -158,6 +185,7 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => {
           const node = state.components[id]
           if (!node) return state
+          if (isNodeLocked(node)) return state
           const bp = state.activeBreakpoint
           if (bp === 'desktop') return state
           const ov = node.breakpointOverrides?.[bp]
@@ -180,6 +208,23 @@ export const useAppStore = create<AppState & AppActions>()(
           }
         })
       },
+      setMeta: (id, patch) => {
+        set((state) => {
+          const node = state.components[id]
+          if (!node) return state
+          if (isNodeLocked(node) && patch.name !== undefined) return state
+          const nextMeta: ComponentMeta = { ...node.meta, ...patch }
+          const nextComponents = {
+            ...state.components,
+            [id]: { ...node, meta: nextMeta },
+          }
+          let nextSelected = state.selectedIds
+          if (patch.visible === false && state.selectedIds.includes(id)) {
+            nextSelected = state.selectedIds.filter((s) => s !== id)
+          }
+          return { components: nextComponents, selectedIds: nextSelected }
+        })
+      },
       moveNode: (draggedId, destParentId, destIndex) => {
         set((state) => {
           const { components } = state
@@ -187,6 +232,7 @@ export const useAppStore = create<AppState & AppActions>()(
           const dragged = components[draggedId]
           const destParent = components[destParentId]
           if (!dragged || !destParent) return state
+          if (isNodeLocked(dragged)) return state
           if (isUnderDragged(components, draggedId, destParentId)) return state
 
           const oldParentId = findParentId(components, draggedId)
@@ -248,4 +294,3 @@ export function canvasRedo() {
   t.redo()
   sanitizeSelection()
 }
-

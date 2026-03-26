@@ -1,5 +1,5 @@
 import { getDefinition, type PropField } from '../registry/registry'
-import { useAppStore } from '../store/useAppStore'
+import { isNodeLocked, useAppStore } from '../store/useAppStore'
 import type { BreakpointId } from '../types/components'
 import { normalizeLayout, type LayoutState } from '../utils/componentLayout'
 import { isPropOverridden, resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
@@ -638,6 +638,7 @@ export function Inspector() {
   const resolvedProps = resolvePropsForBreakpoint(node, activeBreakpoint)
   const layoutOverridden = isPropOverridden(node, activeBreakpoint, 'layout')
   const typographyOverridden = isPropOverridden(node, activeBreakpoint, 'typography')
+  const locked = isNodeLocked(node)
 
   return (
     <div className="space-y-3">
@@ -648,8 +649,16 @@ export function Inspector() {
           {selectedId !== ROOT_ID ? (
             <button
               type="button"
-              className="rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs text-red-700 hover:bg-red-50"
-              onClick={() => deleteComponents([selectedId])}
+              disabled={locked}
+              title={locked ? 'Unlock layer in the layer tree to delete' : undefined}
+              className={[
+                'rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs text-red-700',
+                locked ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-50',
+              ].join(' ')}
+              onClick={() => {
+                if (locked) return
+                deleteComponents([selectedId])
+              }}
             >
               Delete
             </button>
@@ -672,74 +681,82 @@ export function Inspector() {
         </div>
       </div>
 
-      <LayoutInspectorSection
-        layout={resolvedProps.layout}
-        activeBreakpoint={activeBreakpoint}
-        isOverridden={layoutOverridden}
-        onClearOverride={
-          layoutOverridden ? () => clearPropOverride(node.id, 'layout') : undefined
-        }
-        onChange={(next) => setProp(node.id, 'layout', next)}
-      />
-
-      {showTypography ? (
-        <div className="space-y-2">
-          <OverrideChrome
-            activeBreakpoint={activeBreakpoint}
-            isOverridden={typographyOverridden}
-            onClear={
-              typographyOverridden
-                ? () => clearPropOverride(node.id, 'typography')
-                : undefined
-            }
-          />
-          <TypographyInspectorSection
-            typography={resolvedProps.typography}
-            onChange={(next) => setProp(node.id, 'typography', next)}
-          />
+      {locked ? (
+        <div className="rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+          This layer is locked. Unlock it in the layer tree to edit properties.
         </div>
-      ) : null}
+      ) : (
+        <>
+          <LayoutInspectorSection
+            layout={resolvedProps.layout}
+            activeBreakpoint={activeBreakpoint}
+            isOverridden={layoutOverridden}
+            onClearOverride={
+              layoutOverridden ? () => clearPropOverride(node.id, 'layout') : undefined
+            }
+            onChange={(next) => setProp(node.id, 'layout', next)}
+          />
 
-      <div className="space-y-3">
-        {Object.entries(inspector).map(([key, field]) => {
-          const overridden = isPropOverridden(node, activeBreakpoint, key)
-          return (
-            <div key={key}>
+          {showTypography ? (
+            <div className="space-y-2">
               <OverrideChrome
                 activeBreakpoint={activeBreakpoint}
-                isOverridden={overridden}
-                onClear={overridden ? () => clearPropOverride(node.id, key) : undefined}
+                isOverridden={typographyOverridden}
+                onClear={
+                  typographyOverridden
+                    ? () => clearPropOverride(node.id, 'typography')
+                    : undefined
+                }
               />
-              <Field
-                field={field}
-                value={resolvedProps[key]}
-                onChange={(v) => {
-                  if (node.type === 'Select' && key === 'options' && typeof v === 'string') {
-                    const lines = v
-                      .split('\n')
-                      .map((s) => s.trim())
-                      .filter(Boolean)
-                    setProp(node.id, key, lines)
-                    return
-                  }
-                  if (node.type === 'RadioGroup' && key === 'options' && typeof v === 'string') {
-                    const lines = v
-                      .split('\n')
-                      .map((s) => s.trim())
-                      .filter(Boolean)
-                    setProp(node.id, key, lines)
-                    return
-                  }
-                  setProp(node.id, key, v)
-                }}
+              <TypographyInspectorSection
+                typography={resolvedProps.typography}
+                onChange={(next) => setProp(node.id, 'typography', next)}
               />
             </div>
-          )
-        })}
-        {!Object.keys(inspector).length ? (
-          <div className="text-sm text-[color:var(--color-muted)]">No editable props.</div>
-        ) : null}
-      </div>
+          ) : null}
+
+          <div className="space-y-3">
+            {Object.entries(inspector).map(([key, field]) => {
+              const overridden = isPropOverridden(node, activeBreakpoint, key)
+              return (
+                <div key={key}>
+                  <OverrideChrome
+                    activeBreakpoint={activeBreakpoint}
+                    isOverridden={overridden}
+                    onClear={overridden ? () => clearPropOverride(node.id, key) : undefined}
+                  />
+                  <Field
+                    field={field}
+                    value={resolvedProps[key]}
+                    onChange={(v) => {
+                      if (node.type === 'Select' && key === 'options' && typeof v === 'string') {
+                        const lines = v
+                          .split('\n')
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                        setProp(node.id, key, lines)
+                        return
+                      }
+                      if (node.type === 'RadioGroup' && key === 'options' && typeof v === 'string') {
+                        const lines = v
+                          .split('\n')
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                        setProp(node.id, key, lines)
+                        return
+                      }
+                      setProp(node.id, key, v)
+                    }}
+                  />
+                </div>
+              )
+            })}
+            {!Object.keys(inspector).length ? (
+              <div className="text-sm text-[color:var(--color-muted)]">No editable props.</div>
+            ) : null}
+          </div>
+        </>
+      )}
     </div>
   )
 }

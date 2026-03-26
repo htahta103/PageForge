@@ -2,10 +2,12 @@ import { useDroppable } from '@dnd-kit/core'
 import type { ComponentId } from '../types/components'
 import { BREAKPOINT_WIDTH_PX } from '../lib/breakpoints'
 import { getDefinition } from '../registry/registry'
-import { useAppStore } from '../store/useAppStore'
+import { isNodeLocked, isNodeVisible, useAppStore } from '../store/useAppStore'
 import { layoutToStyle, normalizeLayout } from '../utils/componentLayout'
 import { resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
 import { useCanvasViewport } from './CanvasViewportContext'
+
+const ROOT_ID: ComponentId = 'root'
 
 function NodeView({ id }: { id: ComponentId }) {
   const node = useAppStore((s) => s.components[id])
@@ -14,9 +16,13 @@ function NodeView({ id }: { id: ComponentId }) {
   const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
 
   if (!node) return null
+  const onCanvas = id === ROOT_ID || isNodeVisible(node)
+  if (!onCanvas) return null
+
   const def = getDefinition(node.type)
   const children = node.children.map((cid) => <NodeView key={cid} id={cid} />)
   const selected = selectedIds.includes(id)
+  const locked = isNodeLocked(node)
 
   const resolvedProps = resolvePropsForBreakpoint(node, activeBreakpoint)
   const resolvedNode = { ...node, props: resolvedProps }
@@ -34,15 +40,18 @@ function NodeView({ id }: { id: ComponentId }) {
       className={[
         'rounded-[var(--radius-md)] outline-none ring-offset-2',
         selected ? 'ring-2 ring-[color:var(--color-primary)]' : 'hover:ring-1 hover:ring-black/10',
+        locked ? 'cursor-not-allowed' : '',
       ].join(' ')}
       style={layoutStyle}
       role="button"
-      tabIndex={0}
+      tabIndex={locked ? -1 : 0}
       onClick={(e) => {
         e.stopPropagation()
+        if (locked) return
         selectOne(id)
       }}
       onKeyDown={(e) => {
+        if (locked) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           selectOne(id)
@@ -112,7 +121,7 @@ export function Canvas() {
               selectOne(null)
             }}
           >
-            <NodeView id="root" />
+            <NodeView id={ROOT_ID} />
 
             <div className="mt-3 text-xs text-[color:var(--color-muted)]">
               Tip: Drag from palette onto the canvas, or click “Add”. Scroll to zoom. Space+drag or middle mouse to
