@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { resolveColorRef } from './themeResolve'
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 
@@ -16,6 +17,8 @@ export const FONT_PRESETS: { label: string; value: string; css: string }[] = [
   { label: 'Serif', value: 'serif', css: 'Georgia, "Times New Roman", serif' },
   { label: 'Monospace', value: 'mono', css: 'ui-monospace, SFMono-Regular, Menlo, monospace' },
   { label: 'Inter stack', value: 'inter', css: 'Inter, system-ui, sans-serif' },
+  { label: 'Theme · heading', value: 'theme-heading', css: 'var(--font-heading)' },
+  { label: 'Theme · body', value: 'theme-body', css: 'var(--font-body)' },
 ]
 
 export const DEFAULT_TYPOGRAPHY: TypographyState = {
@@ -50,7 +53,8 @@ export function normalizeTypography(raw: unknown): TypographyState {
   if (!isRecord(raw)) return freshDefaultTypography()
 
   const fontFamily =
-    typeof raw.fontFamily === 'string' && FONT_PRESETS.some((p) => p.value === raw.fontFamily)
+    typeof raw.fontFamily === 'string' &&
+    FONT_PRESETS.some((p) => p.value === raw.fontFamily)
       ? raw.fontFamily
       : DEFAULT_TYPOGRAPHY.fontFamily
 
@@ -63,7 +67,12 @@ export function normalizeTypography(raw: unknown): TypographyState {
   const fontWeight = fw && Number.isFinite(Number(fw)) ? fw : DEFAULT_TYPOGRAPHY.fontWeight
 
   let color = typeof raw.color === 'string' ? raw.color.trim() : DEFAULT_TYPOGRAPHY.color
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) color = DEFAULT_TYPOGRAPHY.color
+  const validHex = /^#[0-9a-fA-F]{3,8}$/i.test(color)
+  const tokenRef = /^@[\w-]+$/.test(color)
+  const cssColor =
+    /^var\(\s*--[\w-]+\s*\)/.test(color) ||
+    /^(rgb|hsl|rgba|hsla|oklch)\(/i.test(color)
+  if (!validHex && !tokenRef && !cssColor) color = DEFAULT_TYPOGRAPHY.color
 
   const lineHeight =
     typeof raw.lineHeight === 'string' && raw.lineHeight.trim() !== ''
@@ -90,7 +99,7 @@ export function typographyToStyle(typography: TypographyState): CSSProperties {
   const style: CSSProperties = {
     fontFamily: typographyPresetCss(T.fontFamily),
     lineHeight: T.lineHeight,
-    color: T.color,
+    color: resolveColorRef(T.color),
     textAlign: T.textAlign,
   }
 

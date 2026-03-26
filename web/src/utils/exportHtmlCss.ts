@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 import JSZip from 'jszip'
 import type { BreakpointId, ComponentId, ComponentNode } from '../types/components'
+import type { Theme } from '../types/theme'
+import { GO_DEFAULT_THEME, normalizeTheme, themeToRootCssString } from '../types/theme'
 import { BREAKPOINT_WIDTH_PX } from '../lib/breakpoints'
 import { layoutToStyle, normalizeLayout } from './componentLayout'
 import { normalizeTypography, typographyToStyle } from './typography'
@@ -8,20 +10,7 @@ import { EXPORT_ROOT_ID, mapExportChildStrings, supportsTypography } from './exp
 
 const ROOT_ID: ComponentId = EXPORT_ROOT_ID
 
-const THEME_CSS = `
-:root {
-  --color-bg: oklch(0.985 0 0);
-  --color-fg: oklch(0.2 0 0);
-  --color-muted: oklch(0.55 0 0);
-  --color-border: oklch(0.9 0 0);
-  --color-card: oklch(1 0 0);
-  --color-primary: oklch(0.63 0.25 285);
-  --color-primary-foreground: oklch(0.99 0 0);
-  --radius-md: 12px;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-}
-
+const EXPORT_STRUCTURAL_CSS = `
 * {
   box-sizing: border-box;
 }
@@ -57,7 +46,7 @@ body {
 }
 
 .pf-stack > * + * {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 
 .pf-node-wrap {
@@ -236,6 +225,11 @@ textarea.pf-input-like {
   flex-shrink: 0;
 }
 `
+
+function exportStylesheet(theme: Theme): string {
+  const root = themeToRootCssString(normalizeTheme(theme))
+  return `${root}\n${EXPORT_STRUCTURAL_CSS}`
+}
 
 function escapeHtml(raw: string): string {
   return raw
@@ -508,8 +502,10 @@ ${body}
 export function buildExportedHtml(
   components: Record<string, ComponentNode>,
   breakpoint: BreakpointId,
+  theme: Theme = GO_DEFAULT_THEME,
 ): string {
   const body = buildExportBodyMarkup(components, breakpoint)
+  const sheet = exportStylesheet(theme)
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -518,7 +514,8 @@ export function buildExportedHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Exported page</title>
   <style>
-${THEME_CSS.split('\n')
+${sheet
+  .split('\n')
   .map((line) => `    ${line}`)
   .join('\n')}
   </style>
@@ -560,11 +557,13 @@ export function openExportedHtmlPreview(html: string): void {
 export async function downloadExportZip(
   components: Record<string, ComponentNode>,
   breakpoint: BreakpointId,
-  filename = 'page-export.zip',
+  options?: { filename?: string; theme?: Theme },
 ): Promise<void> {
+  const filename = options?.filename ?? 'page-export.zip'
+  const theme = options?.theme ?? GO_DEFAULT_THEME
   const zip = new JSZip()
   zip.file('index.html', buildExportedHtmlLinked(components, breakpoint))
-  zip.file('css/styles.css', `${THEME_CSS.trim()}\n`)
+  zip.file('css/styles.css', `${exportStylesheet(theme).trim()}\n`)
   const blob = await zip.generateAsync({ type: 'blob' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

@@ -24,10 +24,13 @@ import { deserializeToComponentRecord } from '../utils/componentTreePersistence'
 import {
   createPage,
   getPage,
+  getProject,
   listPages,
   persistCanvasToPage,
   type PageSummary,
 } from '../lib/api/projectsPages'
+import { ThemePanel } from '../editor/ThemePanel'
+import { useProjectThemeStore } from '../store/useProjectThemeStore'
 import { paths } from '../routes/paths'
 
 type PaletteDragData = { kind: 'palette'; componentType: string }
@@ -38,12 +41,6 @@ function isPaletteDragData(value: unknown): value is PaletteDragData {
   return v.kind === 'palette' && typeof v.componentType === 'string'
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!target || !(target instanceof HTMLElement)) return false
-  if (target.isContentEditable) return true
-  return Boolean(target.closest('input, textarea, select'))
-}
-
 export function EditorPage() {
   const { projectId, pageId } = useParams<{ projectId?: string; pageId?: string }>()
   const navigate = useNavigate()
@@ -51,9 +48,9 @@ export function EditorPage() {
 
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
   const addComponentWithDefaults = useAppStore((s) => s.addComponentWithDefaults)
-  const deleteComponents = useAppStore((s) => s.deleteComponents)
   const components = useAppStore((s) => s.components)
   const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
+  const projectTheme = useProjectThemeStore((s) => s.theme)
 
   const [pages, setPages] = useState<PageSummary[]>([])
   const [projectLoading, setProjectLoading] = useState(projectMode)
@@ -70,34 +67,23 @@ export function EditorPage() {
   }
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement
-      if (el.closest('input, textarea, select, [contenteditable="true"]')) return
-      const { selectedIds, deleteSelected, nudgeSelectedLayout } = useAppStore.getState()
-      if (!selectedIds.length) return
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        e.preventDefault()
-        deleteSelected()
-        return
-      }
-      const step = e.shiftKey ? 8 : 2
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault()
-        nudgeSelectedLayout(-step, 0)
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        nudgeSelectedLayout(step, 0)
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        nudgeSelectedLayout(0, -step)
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        nudgeSelectedLayout(0, step)
-      }
+    if (!projectId) {
+      useProjectThemeStore.getState().resetToDefaults()
+      return
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+    let cancelled = false
+    ;(async () => {
+      try {
+        const p = await getProject(projectId)
+        if (!cancelled) useProjectThemeStore.getState().hydrateFromApi(p)
+      } catch (err) {
+        if (!cancelled) console.error('load project failed', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
 
   const hasRoot = Boolean(components.root)
   const paletteCount = Object.keys(components).length - (hasRoot ? 1 : 0)
@@ -210,9 +196,8 @@ export function EditorPage() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditableTarget(e.target)) {
-        return
-      }
+      const el = e.target as HTMLElement
+      if (el.closest('input, textarea, select, [contenteditable="true"]')) return
 
       if (e.metaKey || e.ctrlKey) {
         const key = e.key.toLowerCase()
@@ -229,18 +214,33 @@ export function EditorPage() {
         }
       }
 
+      const { selectedIds, deleteSelected, nudgeSelectedLayout } = useAppStore.getState()
+      if (!selectedIds.length) return
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const { selectedIds } = useAppStore.getState()
-        const toDel = selectedIds.filter((id) => id !== 'root')
-        if (toDel.length > 0) {
-          e.preventDefault()
-          deleteComponents(toDel)
-        }
+        e.preventDefault()
+        deleteSelected()
+        return
+      }
+
+      const step = e.shiftKey ? 8 : 2
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        nudgeSelectedLayout(-step, 0)
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        nudgeSelectedLayout(step, 0)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        nudgeSelectedLayout(0, -step)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        nudgeSelectedLayout(0, step)
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [deleteComponents])
+  }, [])
 
   function onDragEnd(event: DragEndEvent) {
     const overId = event.over?.id
@@ -287,7 +287,7 @@ export function EditorPage() {
               type="button"
               className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"
               onClick={() => {
-                const html = buildExportedHtml(components, activeBreakpoint)
+                const html = buildExportedHtml(components, activeBreakpoint, projectTheme)
                 openExportedHtmlPreview(html)
               }}
             >
@@ -297,7 +297,7 @@ export function EditorPage() {
               type="button"
               className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"
               onClick={() => {
-                void downloadExportZip(components, activeBreakpoint)
+                void downloadExportZip(components, activeBreakpoint, { theme: projectTheme })
               }}
             >
               Download ZIP
@@ -306,7 +306,7 @@ export function EditorPage() {
               type="button"
               className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"
               onClick={() => {
-                const html = buildExportedHtml(components, activeBreakpoint)
+                const html = buildExportedHtml(components, activeBreakpoint, projectTheme)
                 downloadTextFile('page-export.html', html, 'text/html;charset=utf-8')
               }}
             >
@@ -341,6 +341,7 @@ export function EditorPage() {
                 onPagesChanged={refreshPages}
               />
             ) : null}
+            <ThemePanel disabled={projectLoading} />
             <Palette />
             <LayerTree />
           </aside>

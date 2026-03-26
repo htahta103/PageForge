@@ -7,7 +7,10 @@ import { ROOT_ID } from '../lib/tree'
 import { isNodeLocked, isNodeVisible, useAppStore } from '../store/useAppStore'
 import { layoutToStyle, normalizeLayout } from '../utils/componentLayout'
 import { resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
-import { normalizeSurface, surfaceToStyle } from '../utils/componentSurface'
+import { surfaceToStyle } from '../utils/componentSurface'
+import { themeToInlineStyle } from '../types/theme'
+import { resolveSurfaceColorTokens } from '../utils/themeResolve'
+import { useProjectThemeStore } from '../store/useProjectThemeStore'
 import { useCanvasViewport } from './CanvasViewportContext'
 
 function isEditableTarget(t: EventTarget | null): boolean {
@@ -107,7 +110,7 @@ function NodeView({ id }: { id: ComponentId }) {
   )
 
   const layoutStyle = layoutToStyle(normalizeLayout(resolvedProps.layout))
-  const surfaceStyle = surfaceToStyle(normalizeSurface(resolvedProps.surface))
+  const surfaceStyle = surfaceToStyle(resolveSurfaceColorTokens(resolvedProps.surface))
 
   return (
     <div
@@ -155,6 +158,9 @@ type MarqueeSession = {
 }
 
 export function Canvas() {
+  const theme = useProjectThemeStore((s) => s.theme)
+  const themeStyle = themeToInlineStyle(theme)
+
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
   const addComponentWithDefaults = useAppStore((s) => s.addComponentWithDefaults)
   const selectOne = useAppStore((s) => s.selectOne)
@@ -308,7 +314,11 @@ export function Canvas() {
               'relative w-full max-w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-white p-2 shadow-sm transition-[width] duration-200',
               isOver ? 'bg-[color:var(--color-primary)]/5 ring-2 ring-[color:var(--color-primary)]/40' : '',
             ].join(' ')}
-            style={{ width: canvasWidthPx, maxWidth: '100%' }}
+            style={{
+              width: canvasWidthPx,
+              maxWidth: '100%',
+              ...themeStyle,
+            }}
             onPointerDownCapture={onInnerPointerDownCapture}
             onClick={(e) => {
               e.stopPropagation()

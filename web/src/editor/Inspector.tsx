@@ -18,6 +18,8 @@ import {
   type TextAlign,
   type TypographyState,
 } from '../utils/typography'
+import { documentedColorTokenKeys } from '../types/theme'
+import { useProjectThemeStore } from '../store/useProjectThemeStore'
 
 const inputClass =
   'w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm'
@@ -499,6 +501,12 @@ function TypographyInspectorSection({
   const T = normalizeTypography(typography)
 
   const setAlign = (textAlign: TextAlign) => onChange({ ...T, textAlign })
+  const tokenHint = useProjectThemeStore((s) =>
+    documentedColorTokenKeys(s.theme)
+      .map((k) => `@${k}`)
+      .join(', '),
+  )
+  const colorWell = /^#[0-9a-fA-F]{6}$/i.test(T.color) ? T.color : '#111827'
 
   return (
     <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
@@ -552,20 +560,21 @@ function TypographyInspectorSection({
         <div className="flex items-center gap-2">
           <input
             aria-label="Text color"
-            className="h-9 w-14 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
+            className="h-9 w-14 shrink-0 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
             type="color"
-            value={T.color}
+            value={colorWell}
             onChange={(e) => onChange({ ...T, color: e.target.value })}
           />
           <input
             className={inputClass}
-            placeholder="#111827"
+            placeholder="#111827 or @primary"
             spellCheck={false}
             type="text"
             value={T.color}
             onChange={(e) => onChange({ ...T, color: e.target.value })}
           />
         </div>
+        <div className={subMuted}>Theme tokens: {tokenHint || '—'}</div>
       </label>
 
       <label className="block space-y-1">
@@ -628,6 +637,14 @@ function SurfaceInspectorSection({
   onChange: (next: SurfaceState) => void
 }) {
   const S = normalizeSurface(surface)
+  const tokenHint = useProjectThemeStore((s) =>
+    documentedColorTokenKeys(s.theme)
+      .map((k) => `@${k}`)
+      .join(', '),
+  )
+  const bgColorWell = /^#[0-9a-fA-F]{6}$/i.test(S.background.color)
+    ? S.background.color
+    : '#ffffff'
 
   const patch = (partial: Partial<SurfaceState>) => {
     onChange({
@@ -655,6 +672,7 @@ function SurfaceInspectorSection({
     <>
       <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
         <div className={labelClass}>Background</div>
+        <div className={subMuted}>Use theme tokens in color fields: {tokenHint || '—'}</div>
 
         <label className="block space-y-1">
           <div className={subMuted}>Fill type</div>
@@ -676,14 +694,14 @@ function SurfaceInspectorSection({
             <div className="flex items-center gap-2">
               <input
                 aria-label="Background color"
-                className="h-9 w-14 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
+                className="h-9 w-14 shrink-0 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
                 type="color"
-                value={S.background.color}
+                value={bgColorWell}
                 onChange={(e) => setBackground({ color: e.target.value })}
               />
               <input
                 className={inputClass}
-                placeholder="#ffffff"
+                placeholder="#ffffff or @primary"
                 spellCheck={false}
                 type="text"
                 value={S.background.color}

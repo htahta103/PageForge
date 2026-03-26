@@ -31,9 +31,12 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
     type: 'Root',
     title: 'Root',
     render: (_node, children) => (
-      <div className="min-h-[420px] rounded-[var(--radius-md)] border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-card)] p-6">
+      <div
+        className="flex min-h-[420px] flex-col rounded-[var(--radius-md)] border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-card)] p-6"
+        style={{ gap: 'var(--space-4)' }}
+      >
         {children.length ? (
-          <div className="space-y-4">{children}</div>
+          children
         ) : (
           <div className="text-sm text-[color:var(--color-muted)]">
             Drop components here (or click “Add” in the palette).
@@ -105,7 +108,7 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
           ? 'border border-[color:var(--color-border)] bg-[color:var(--color-card)]'
           : variant === 'ghost'
             ? 'border border-transparent bg-transparent'
-            : 'border border-transparent bg-[color:var(--color-primary)] text-white'
+            : 'border border-transparent bg-[color:var(--color-primary)] text-[color:var(--color-primary-foreground)]'
       return (
         <button className={`${base} ${skin}`} style={typo} type="button">
           {label}

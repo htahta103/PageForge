@@ -1,6 +1,15 @@
 import { apiFetch } from './client'
 import type { ComponentId, ComponentNode } from '../../types/components'
+import type { Theme } from '../../types/theme'
 import { serializeComponentRecord } from '../../utils/componentTreePersistence'
+
+export interface ProjectDetail {
+  id: string
+  name: string
+  theme: Theme
+  createdAt: string
+  updatedAt: string
+}
 
 export interface ProjectSummary {
   id: string
@@ -39,13 +48,25 @@ export async function listProjects(params?: { limit?: number; offset?: number })
 }
 
 export async function createProject(body: { name: string }) {
-  return apiFetch<{
-    id: string
-    name: string
-    theme: unknown
-    createdAt: string
-    updatedAt: string
-  }>('/api/v1/projects/', { method: 'POST', json: body })
+  return apiFetch<ProjectDetail>('/api/v1/projects/', { method: 'POST', json: body })
+}
+
+export async function getProject(projectId: string) {
+  return apiFetch<ProjectDetail>(`/api/v1/projects/${projectId}`)
+}
+
+export async function updateProject(
+  projectId: string,
+  body: {
+    name?: string
+    theme?: Theme
+    baseUpdatedAt?: string
+  },
+) {
+  return apiFetch<ProjectDetail>(`/api/v1/projects/${projectId}`, {
+    method: 'PUT',
+    json: body,
+  })
 }
 
 export async function listPages(projectId: string) {
