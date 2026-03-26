@@ -9,6 +9,7 @@ import type {
 } from '../types/components'
 import { getDefinition } from '../registry/registry'
 import { collectDescendantIds, findParentId, ROOT_ID } from '../lib/tree'
+import { clearHistorySession, recordHistoryOperation } from './historySession'
 import { DEFAULT_LAYOUT, normalizeLayout, type LayoutState } from '../utils/componentLayout'
 
 /** True if candidateId is draggedId or nested under draggedId (invalid reparent target). */
@@ -40,7 +41,14 @@ export interface AppActions {
   toggleInSelection: (id: ComponentId) => void
   setActiveBreakpoint: (bp: BreakpointId) => void
   addComponent: (type: string, parentId?: ComponentId, initialProps?: Record<string, unknown>) => ComponentId
+  /** Same as addComponent; alias for call sites that emphasize bundled defaults (one undo step). */
+  addComponentWithDefaults: (
+    type: string,
+    parentId?: ComponentId,
+    defaults?: Record<string, unknown>,
+  ) => ComponentId
   deleteComponents: (ids: ComponentId[]) => void
+  removeComponent: (id: ComponentId) => void
   setProp: (id: ComponentId, key: string, value: unknown) => void
   clearPropOverride: (id: ComponentId, key: string) => void
   setMeta: (id: ComponentId, patch: Partial<ComponentMeta>) => void
@@ -124,6 +132,11 @@ const useAppStoreBase = create<AppState & AppActions>()(
           }
         })
         return id
+      },
+      addComponentWithDefaults: (type, parentId = ROOT_ID, defaults = {}) =>
+        get().addComponent(type, parentId, defaults),
+      removeComponent: (id) => {
+        get().deleteComponents([id])
       },
       deleteComponents: (ids) => {
         set((state) => {
@@ -403,6 +416,10 @@ const useAppStoreBase = create<AppState & AppActions>()(
       limit: 100,
       partialize: (state) => ({ components: state.components }),
       equality: (past, current) => past.components === current.components,
+      onSave: (past, cur) => {
+        const pastLen = useAppStoreBase.temporal.getState().pastStates.length
+        recordHistoryOperation(past, cur, pastLen)
+      },
     },
   ),
 )
@@ -416,6 +433,7 @@ export function loadCanvasState(components: Record<ComponentId, ComponentNode>) 
     activeBreakpoint: 'desktop',
   })
   useAppStore.temporal.getState().clear()
+  clearHistorySession()
 }
 
 function sanitizeSelection() {

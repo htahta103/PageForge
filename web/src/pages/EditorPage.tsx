@@ -10,6 +10,7 @@ import { Palette } from '../editor/Palette'
 import { Canvas } from '../editor/Canvas'
 import { CanvasViewportProvider } from '../editor/CanvasViewportContext'
 import { CanvasZoomToolbar } from '../editor/CanvasZoomToolbar'
+import { HistoryPanel } from '../editor/HistoryPanel'
 import { Inspector } from '../editor/Inspector'
 import { UndoRedoToolbar } from '../editor/UndoRedoToolbar'
 import { buildExportedHtml, downloadTextFile } from '../utils/exportHtmlCss'
@@ -43,7 +44,7 @@ export function EditorPage() {
   const projectMode = Boolean(projectId)
 
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
-  const addComponent = useAppStore((s) => s.addComponent)
+  const addComponentWithDefaults = useAppStore((s) => s.addComponentWithDefaults)
   const deleteComponents = useAppStore((s) => s.deleteComponents)
   const components = useAppStore((s) => s.components)
   const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
@@ -244,7 +245,7 @@ export function EditorPage() {
     const type = data.componentType
     const def = getDefinition(type)
     const defaults = def?.defaults ?? {}
-    addComponent(type, 'root', defaults)
+    addComponentWithDefaults(type, 'root', defaults)
   }
 
   if (projectMode && projectLoading) {
@@ -321,6 +322,7 @@ export function EditorPage() {
 
           <aside className="col-span-12 space-y-3 md:col-span-3">
             <Inspector />
+            <HistoryPanel />
           </aside>
         </div>
 
@@ -335,7 +337,7 @@ export function EditorPage() {
                 onClick={() => {
                   const def = getDefinition(t)
                   const defaults = def?.defaults ?? {}
-                  addComponent(t, 'root', defaults)
+                  addComponentWithDefaults(t, 'root', defaults)
                 }}
               >
                 {t}

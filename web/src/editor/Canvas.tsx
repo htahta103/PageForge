@@ -156,7 +156,7 @@ type MarqueeSession = {
 
 export function Canvas() {
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
-  const addComponent = useAppStore((s) => s.addComponent)
+  const addComponentWithDefaults = useAppStore((s) => s.addComponentWithDefaults)
   const selectOne = useAppStore((s) => s.selectOne)
   const select = useAppStore((s) => s.select)
   const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
@@ -341,7 +341,7 @@ export function Canvas() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  addComponent('Card')
+                  addComponentWithDefaults('Card')
                 }}
               >
                 Quick add Card

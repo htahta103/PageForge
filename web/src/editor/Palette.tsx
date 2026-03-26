@@ -29,7 +29,7 @@ function PaletteItem({ type, title }: { type: string; title: string }) {
 }
 
 export function Palette() {
-  const addComponent = useAppStore((s) => s.addComponent)
+  const addComponentWithDefaults = useAppStore((s) => s.addComponentWithDefaults)
 
   const items = useMemo(() => {
     const defs = Object.values(registry).filter((d) => d.type !== 'Root')
@@ -50,7 +50,7 @@ export function Palette() {
               className="w-full rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs text-[color:var(--color-muted)] hover:bg-black/5"
               type="button"
               onClick={() => {
-                addComponent(d.type, ROOT_ID, d.defaults ?? {})
+                addComponentWithDefaults(d.type, ROOT_ID, d.defaults ?? {})
               }}
             >
               Add
