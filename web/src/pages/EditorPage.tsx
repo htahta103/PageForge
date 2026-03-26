@@ -13,7 +13,12 @@ import { CanvasZoomToolbar } from '../editor/CanvasZoomToolbar'
 import { HistoryPanel } from '../editor/HistoryPanel'
 import { Inspector } from '../editor/Inspector'
 import { UndoRedoToolbar } from '../editor/UndoRedoToolbar'
-import { buildExportedHtml, downloadTextFile } from '../utils/exportHtmlCss'
+import {
+  buildExportedHtml,
+  downloadExportZip,
+  downloadTextFile,
+  openExportedHtmlPreview,
+} from '../utils/exportHtmlCss'
 import { buildExportedReactTailwind } from '../utils/exportReactTailwind'
 import { deserializeToComponentRecord } from '../utils/componentTreePersistence'
 import {
@@ -278,6 +283,25 @@ export function EditorPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"
+              onClick={() => {
+                const html = buildExportedHtml(components, activeBreakpoint)
+                openExportedHtmlPreview(html)
+              }}
+            >
+              Preview
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"
+              onClick={() => {
+                void downloadExportZip(components, activeBreakpoint)
+              }}
+            >
+              Download ZIP
+            </button>
             <button
               type="button"
               className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"

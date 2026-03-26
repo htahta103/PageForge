@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import JSZip from 'jszip'
 import type { BreakpointId, ComponentId, ComponentNode } from '../types/components'
 import { BREAKPOINT_WIDTH_PX } from '../lib/breakpoints'
 import { layoutToStyle, normalizeLayout } from './componentLayout'
@@ -466,7 +467,7 @@ function exportNodeSubtree(id: ComponentId, components: Record<string, Component
   return wrapStyles(layoutStr, inner, indent)
 }
 
-export function buildExportedHtml(
+function buildExportBodyMarkup(
   components: Record<string, ComponentNode>,
   breakpoint: BreakpointId,
 ): string {
@@ -474,7 +475,7 @@ export function buildExportedHtml(
   const subtree = exportNodeSubtree(ROOT_ID, components, '')
   const inner = subtree.trim()
 
-  const body = `  <div class="pf-page-body">
+  return `  <div class="pf-page-body">
     <main class="pf-export-frame" style="width: ${widthPx}px; max-width: 100%;">
 ${inner
   .split('\n')
@@ -482,6 +483,33 @@ ${inner
   .join('\n')}
     </main>
   </div>`
+}
+
+function buildExportedHtmlLinked(
+  components: Record<string, ComponentNode>,
+  breakpoint: BreakpointId,
+): string {
+  const body = buildExportBodyMarkup(components, breakpoint)
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exported page</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+${body}
+</body>
+</html>
+`
+}
+
+export function buildExportedHtml(
+  components: Record<string, ComponentNode>,
+  breakpoint: BreakpointId,
+): string {
+  const body = buildExportBodyMarkup(components, breakpoint)
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -490,8 +518,7 @@ ${inner
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Exported page</title>
   <style>
-${THEME_CSS
-  .split('\n')
+${THEME_CSS.split('\n')
   .map((line) => `    ${line}`)
   .join('\n')}
   </style>
@@ -505,6 +532,40 @@ ${body}
 
 export function downloadTextFile(filename: string, content: string, mime: string): void {
   const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+/** Opens a full HTML document in a new tab using a blob URL (offline, no backend). */
+export function openExportedHtmlPreview(html: string): void {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const win = window.open(url, '_blank', 'noopener,noreferrer')
+  if (!win) {
+    URL.revokeObjectURL(url)
+    return
+  }
+  // Revoke after navigation — opener cannot rely on child `load` with noopener / opaque origins.
+  window.setTimeout(() => URL.revokeObjectURL(url), 120_000)
+}
+
+/** ZIP with `index.html` + `css/styles.css` for static hosting or editing. */
+export async function downloadExportZip(
+  components: Record<string, ComponentNode>,
+  breakpoint: BreakpointId,
+  filename = 'page-export.zip',
+): Promise<void> {
+  const zip = new JSZip()
+  zip.file('index.html', buildExportedHtmlLinked(components, breakpoint))
+  zip.file('css/styles.css', `${THEME_CSS.trim()}\n`)
+  const blob = await zip.generateAsync({ type: 'blob' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
