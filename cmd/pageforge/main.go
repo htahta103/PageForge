@@ -39,10 +39,16 @@ func main() {
 	}
 	defer pool.Close()
 
-	if err := pool.Ping(context.Background()); err != nil {
-		log.Fatal().Err(err).Msg("failed to ping database")
+	// Don't hard-fail the whole service if the DB is temporarily unreachable.
+	// The /api/v1/health endpoint does not require DB access, and Fly health
+	// checks should still succeed while Postgres warms up.
+	pingCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := pool.Ping(pingCtx); err != nil {
+		log.Warn().Err(err).Msg("database ping failed; starting server anyway")
+	} else {
+		log.Info().Msg("connected to database")
 	}
-	log.Info().Msg("connected to database")
 
 	// Dependencies
 	repo := repository.New(pool)
