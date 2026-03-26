@@ -1040,20 +1040,51 @@ function SurfaceInspectorSection({
   )
 }
 
+const btnClass =
+  'rounded-md border border-[color:var(--color-border)] px-3 py-1.5 text-sm hover:bg-black/5'
+
 export function Inspector() {
-  const selectedId = useAppStore((s) => s.selectedIds[0] ?? null)
+  const selectedIds = useAppStore((s) => s.selectedIds)
+  const selectedId = selectedIds[0] ?? null
   const node = useAppStore((s) => (selectedId ? s.components[selectedId] : null))
   const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
   const setProp = useAppStore((s) => s.setProp)
   const deleteComponents = useAppStore((s) => s.deleteComponents)
   const clearPropOverride = useAppStore((s) => s.clearPropOverride)
+  const groupSelected = useAppStore((s) => s.groupSelected)
+  const ungroupSelected = useAppStore((s) => s.ungroupSelected)
+  const deleteSelected = useAppStore((s) => s.deleteSelected)
 
-  if (!selectedId || !node) {
+  if (!selectedIds.length || !node) {
     return (
       <div className="space-y-2">
         <div className="text-sm font-semibold">Inspector</div>
         <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3 text-sm text-[color:var(--color-muted)]">
           Select a component on the canvas to edit its properties.
+        </div>
+      </div>
+    )
+  }
+
+  if (selectedIds.length > 1) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-sm font-semibold">Inspector</div>
+          <div className="text-xs text-[color:var(--color-muted)]">{selectedIds.length} selected</div>
+        </div>
+        <div className="space-y-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
+          <div className="text-xs text-[color:var(--color-muted)]">
+            Shift+click or drag a rectangle on empty canvas to add to the selection.
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button className={btnClass} type="button" onClick={() => groupSelected()}>
+              Group
+            </button>
+            <button className={btnClass} type="button" onClick={() => deleteSelected()}>
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -1067,6 +1098,8 @@ export function Inspector() {
   const surfaceOverridden = isPropOverridden(node, activeBreakpoint, 'surface')
   const typographyOverridden = isPropOverridden(node, activeBreakpoint, 'typography')
   const locked = isNodeLocked(node)
+
+  const showUngroup = node.type === 'Group'
 
   return (
     <div className="space-y-3">
@@ -1098,6 +1131,14 @@ export function Inspector() {
         <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-2 text-xs text-[color:var(--color-muted)]">
           Editing <span className="font-semibold capitalize text-[color:var(--color-fg)]">{activeBreakpoint}</span>{' '}
           overrides. Unset fields use the desktop base.
+        </div>
+      ) : null}
+
+      {showUngroup ? (
+        <div className="flex flex-wrap gap-2">
+          <button className={btnClass} type="button" onClick={() => ungroupSelected()}>
+            Ungroup
+          </button>
         </div>
       ) : null}
 

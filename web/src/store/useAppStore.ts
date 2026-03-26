@@ -8,18 +8,8 @@ import type {
   ComponentNode,
 } from '../types/components'
 import { getDefinition } from '../registry/registry'
-
-const ROOT_ID: ComponentId = 'root'
-
-function findParentId(
-  components: Record<ComponentId, ComponentNode>,
-  childId: ComponentId,
-): ComponentId | null {
-  for (const [pid, node] of Object.entries(components)) {
-    if (node.children.includes(childId)) return pid
-  }
-  return null
-}
+import { collectDescendantIds, findParentId, ROOT_ID } from '../lib/tree'
+import { DEFAULT_LAYOUT, normalizeLayout, type LayoutState } from '../utils/componentLayout'
 
 /** True if candidateId is draggedId or nested under draggedId (invalid reparent target). */
 function isUnderDragged(
@@ -47,17 +37,20 @@ export interface AppActions {
   ensureInitialized: () => void
   select: (ids: ComponentId[]) => void
   selectOne: (id: ComponentId | null) => void
+  toggleInSelection: (id: ComponentId) => void
   setActiveBreakpoint: (bp: BreakpointId) => void
   addComponent: (type: string, parentId?: ComponentId, initialProps?: Record<string, unknown>) => ComponentId
   deleteComponents: (ids: ComponentId[]) => void
   setProp: (id: ComponentId, key: string, value: unknown) => void
   clearPropOverride: (id: ComponentId, key: string) => void
   setMeta: (id: ComponentId, patch: Partial<ComponentMeta>) => void
-  /** Move a node to destParentId at index (0-based, relative to children before the move). */
   moveNode: (draggedId: ComponentId, destParentId: ComponentId, destIndex: number) => void
+  deleteSelected: () => void
+  groupSelected: () => void
+  ungroupSelected: () => void
+  nudgeSelectedLayout: (dxPx: number, dyPx: number) => void
 }
 
-/** visible/locked default true / false when omitted */
 export function isNodeVisible(node: ComponentNode | undefined): boolean {
   if (!node) return false
   return node.meta?.visible !== false
@@ -102,6 +95,17 @@ const useAppStoreBase = create<AppState & AppActions>()(
       },
       select: (ids) => set({ selectedIds: ids }),
       selectOne: (id) => set({ selectedIds: id ? [id] : [] }),
+      toggleInSelection: (id) => {
+        if (id === ROOT_ID) return
+        set((state) => {
+          const cur = state.selectedIds
+          if (cur.includes(id)) {
+            const next = cur.filter((x) => x !== id)
+            return { selectedIds: next.length ? next : [] }
+          }
+          return { selectedIds: [...cur, id] }
+        })
+      },
       setActiveBreakpoint: (bp) => set({ activeBreakpoint: bp }),
       addComponent: (type, parentId = ROOT_ID, initialProps) => {
         const id = globalThis.crypto?.randomUUID?.() ?? `cmp_${Date.now()}_${Math.random()}`
@@ -263,6 +267,137 @@ const useAppStoreBase = create<AppState & AppActions>()(
           return { components: next }
         })
       },
+      deleteSelected: () => {
+        set((state) => {
+          const toRemove = new Set(
+            state.selectedIds.filter(
+              (id) =>
+                id !== ROOT_ID &&
+                state.components[id] &&
+                !isNodeLocked(state.components[id]),
+            ),
+          )
+          for (const id of [...toRemove]) {
+            for (const d of collectDescendantIds(state.components, id)) {
+              if (d !== ROOT_ID && !isNodeLocked(state.components[d])) toRemove.add(d)
+            }
+          }
+          if (!toRemove.size) return { selectedIds: [] }
+          const next: Record<ComponentId, ComponentNode> = {}
+          for (const [id, node] of Object.entries(state.components)) {
+            if (toRemove.has(id)) continue
+            next[id] = {
+              ...node,
+              children: node.children.filter((c) => !toRemove.has(c)),
+            }
+          }
+          return { components: next, selectedIds: [] }
+        })
+      },
+      groupSelected: () => {
+        set((state) => {
+          const picked = state.selectedIds.filter((id) => id !== ROOT_ID && state.components[id])
+          if (picked.length < 2) return state
+          if (picked.some((id) => isNodeLocked(state.components[id]!))) return state
+
+          const parentId = findParentId(state.components, picked[0]!)
+          if (!parentId) return state
+          const parent = state.components[parentId]
+          if (!parent) return state
+
+          const parentMismatch = picked.some((id) => findParentId(state.components, id) !== parentId)
+          if (parentMismatch) return state
+
+          const order = new Map(parent.children.map((id, i) => [id, i]))
+          const sorted = [...picked].sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0))
+          const pickSet = new Set(sorted)
+          const insertAt = Math.min(...sorted.map((id) => parent.children.indexOf(id)))
+
+          const groupId = globalThis.crypto?.randomUUID?.() ?? `cmp_${Date.now()}_${Math.random()}`
+          const groupTitle = getDefinition('Group')?.title ?? 'Group'
+          const groupLayout: LayoutState = {
+            ...DEFAULT_LAYOUT,
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            width: { ...DEFAULT_LAYOUT.width },
+            height: { ...DEFAULT_LAYOUT.height },
+            padding: { ...DEFAULT_LAYOUT.padding },
+            margin: { ...DEFAULT_LAYOUT.margin },
+          }
+
+          const newChildren = parent.children.filter((id) => !pickSet.has(id))
+          newChildren.splice(insertAt, 0, groupId)
+
+          return {
+            components: {
+              ...state.components,
+              [groupId]: {
+                id: groupId,
+                type: 'Group',
+                props: { layout: groupLayout },
+                children: sorted,
+                meta: { name: groupTitle },
+              },
+              [parentId]: { ...parent, children: newChildren },
+            },
+            selectedIds: [groupId],
+          }
+        })
+      },
+      ungroupSelected: () => {
+        set((state) => {
+          if (state.selectedIds.length !== 1) return state
+          const gid = state.selectedIds[0]!
+          const node = state.components[gid]
+          if (!node || node.type !== 'Group') return state
+          if (isNodeLocked(node)) return state
+
+          const parentId = findParentId(state.components, gid)
+          if (!parentId) return state
+          const parent = state.components[parentId]
+          if (!parent) return state
+
+          const ix = parent.children.indexOf(gid)
+          if (ix < 0) return state
+
+          const nextChildren = [...parent.children]
+          nextChildren.splice(ix, 1, ...node.children)
+
+          const rest = { ...state.components }
+          delete rest[gid]
+          return {
+            components: {
+              ...rest,
+              [parentId]: { ...parent, children: nextChildren },
+            },
+            selectedIds: node.children.length ? [...node.children] : [],
+          }
+        })
+      },
+      nudgeSelectedLayout: (dxPx, dyPx) => {
+        set((state) => {
+          const next: Record<ComponentId, ComponentNode> = { ...state.components }
+          for (const id of state.selectedIds) {
+            if (id === ROOT_ID) continue
+            const node = next[id]
+            if (!node || isNodeLocked(node)) continue
+            const L = normalizeLayout(node.props.layout)
+            const ml = Number.parseFloat(L.margin.left) || 0
+            const mt = Number.parseFloat(L.margin.top) || 0
+            const nextL: LayoutState = {
+              ...L,
+              margin: {
+                ...L.margin,
+                left: String(Math.round(ml + dxPx)),
+                top: String(Math.round(mt + dyPx)),
+              },
+            }
+            next[id] = { ...node, props: { ...node.props, layout: nextL } }
+          }
+          return { components: next }
+        })
+      },
     }),
     {
       limit: 100,
@@ -272,7 +407,6 @@ const useAppStoreBase = create<AppState & AppActions>()(
   ),
 )
 
-/** Replace tree from API/load; clears undo/redo and selection. */
 export const useAppStore = useAppStoreBase
 
 export function loadCanvasState(components: Record<ComponentId, ComponentNode>) {
@@ -291,7 +425,6 @@ function sanitizeSelection() {
   useAppStore.setState({ selectedIds: next })
 }
 
-/** Undo last canvas tree change only (selection & breakpoint do not consume history). */
 export function canvasUndo() {
   const t = useAppStore.temporal.getState()
   if (t.pastStates.length === 0) return
@@ -299,7 +432,6 @@ export function canvasUndo() {
   sanitizeSelection()
 }
 
-/** Redo last reverted canvas tree change. */
 export function canvasRedo() {
   const t = useAppStore.temporal.getState()
   if (t.futureStates.length === 0) return

@@ -62,6 +62,36 @@ export function EditorPage() {
     ensureInitialized()
   }
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement
+      if (el.closest('input, textarea, select, [contenteditable="true"]')) return
+      const { selectedIds, deleteSelected, nudgeSelectedLayout } = useAppStore.getState()
+      if (!selectedIds.length) return
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault()
+        deleteSelected()
+        return
+      }
+      const step = e.shiftKey ? 8 : 2
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        nudgeSelectedLayout(-step, 0)
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        nudgeSelectedLayout(step, 0)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        nudgeSelectedLayout(0, -step)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        nudgeSelectedLayout(0, step)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const hasRoot = Boolean(components.root)
   const paletteCount = Object.keys(components).length - (hasRoot ? 1 : 0)
 

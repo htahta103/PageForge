@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ComponentNode, ComponentType } from '../types/components'
+import { DEFAULT_LAYOUT, layoutToStyle, normalizeLayout } from '../utils/componentLayout'
 import { DEFAULT_TYPOGRAPHY, normalizeTypography, typographyToStyle } from '../utils/typography'
 
 export type PropField =
@@ -40,6 +41,36 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
         )}
       </div>
     ),
+  },
+
+  Group: {
+    type: 'Group',
+    title: 'Group',
+    defaults: {
+      layout: {
+        ...DEFAULT_LAYOUT,
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        width: { ...DEFAULT_LAYOUT.width },
+        height: { ...DEFAULT_LAYOUT.height },
+        padding: { ...DEFAULT_LAYOUT.padding },
+        margin: { ...DEFAULT_LAYOUT.margin },
+      },
+    },
+    render: (node, children) => {
+      const style = layoutToStyle(normalizeLayout(node.props.layout))
+      return (
+        <div
+          className="min-h-[2rem] rounded-[var(--radius-md)] border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-muted)]/[0.08]"
+          style={style}
+        >
+          {children?.length ? children : (
+            <span className="p-2 text-xs text-[color:var(--color-muted)]">Empty group</span>
+          )}
+        </div>
+      )
+    },
   },
 
   Button: {
