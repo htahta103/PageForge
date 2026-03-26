@@ -2,6 +2,7 @@ import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 import { useAppStore } from '../store/useAppStore'
 import { getDefinition } from '../registry/registry'
 import { BreakpointToolbar } from '../editor/BreakpointToolbar'
+import { LayerTree } from '../editor/LayerTree'
 import { Palette } from '../editor/Palette'
 import { Canvas } from '../editor/Canvas'
 import { Inspector } from '../editor/Inspector'
@@ -55,8 +56,9 @@ export function EditorPage() {
         </div>
 
         <div className="grid grid-cols-12 gap-4">
-          <aside className="col-span-12 space-y-3 md:col-span-3">
+          <aside className="col-span-12 space-y-4 md:col-span-3">
             <Palette />
+            <LayerTree />
           </aside>
 
           <section className="col-span-12 space-y-3 md:col-span-6">
