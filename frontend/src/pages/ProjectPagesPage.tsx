@@ -86,6 +86,7 @@ export function ProjectPagesPage() {
       <form
         onSubmit={onCreate}
         className="rounded-xl border border-neutral-200 bg-white p-4"
+        data-testid="pages-create-form"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex-1 space-y-1">
@@ -97,6 +98,7 @@ export function ProjectPagesPage() {
               value={name}
               placeholder={t('pages.namePlaceholder')}
               onChange={(e) => setName(e.target.value)}
+              data-testid="pages-name-input"
             />
             {nameError && (
               <div className="text-xs text-red-600">{t(nameError)}</div>
@@ -106,6 +108,7 @@ export function ProjectPagesPage() {
             type="submit"
             disabled={creating}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            data-testid="pages-create-button"
           >
             {creating ? t('pages.creating') : t('pages.create')}
           </button>
@@ -130,7 +133,7 @@ export function ProjectPagesPage() {
           {t('pages.empty')}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="pages-list">
           {pages.map((p) => (
             <div
               key={p.id}
@@ -143,6 +146,7 @@ export function ProjectPagesPage() {
               <Link
                 className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
                 to={`/projects/${projectId}/pages/${p.id}/edit`}
+                data-testid={`pages-open-editor-${p.id}`}
               >
                 {t('pages.openEditor')}
               </Link>

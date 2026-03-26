@@ -20,6 +20,7 @@ export function Canvas() {
         'min-h-[480px] rounded-xl border-2 border-dashed border-neutral-300 bg-white p-4',
         isOver ? 'border-blue-400 bg-blue-50/40' : '',
       ].join(' ')}
+      data-testid="editor-canvas"
       onClick={() => select([])}
       onKeyDown={(e) => {
         if (e.key === 'Escape') select([])

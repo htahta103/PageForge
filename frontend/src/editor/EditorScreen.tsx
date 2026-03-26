@@ -123,7 +123,7 @@ export function EditorScreen() {
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="editor-screen">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-sm text-neutral-500">
@@ -205,6 +205,7 @@ export function EditorScreen() {
               className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
               disabled={saveState.status === 'saving'}
               onClick={() => void save()}
+              data-testid="editor-save"
             >
               {saveState.status === 'saving'
                 ? t('editor.saving')

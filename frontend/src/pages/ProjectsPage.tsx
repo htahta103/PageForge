@@ -65,6 +65,7 @@ export function ProjectsPage() {
       <form
         onSubmit={onCreate}
         className="rounded-xl border border-neutral-200 bg-white p-4"
+        data-testid="projects-create-form"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex-1 space-y-1">
@@ -76,6 +77,7 @@ export function ProjectsPage() {
               value={name}
               placeholder={t('projects.namePlaceholder')}
               onChange={(e) => setName(e.target.value)}
+              data-testid="projects-name-input"
             />
             {nameError && (
               <div className="text-xs text-red-600">{t(nameError)}</div>
@@ -85,6 +87,7 @@ export function ProjectsPage() {
             type="submit"
             disabled={creating}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            data-testid="projects-create-button"
           >
             {creating ? t('projects.creating') : t('projects.create')}
           </button>
@@ -109,7 +112,10 @@ export function ProjectsPage() {
           {t('projects.empty')}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div
+          className="grid grid-cols-1 gap-3 md:grid-cols-2"
+          data-testid="projects-list"
+        >
           {items.map((p) => (
             <div
               key={p.id}
@@ -125,6 +131,7 @@ export function ProjectsPage() {
                 <Link
                   className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
                   to={`/projects/${p.id}`}
+                  data-testid={`projects-open-${p.id}`}
                 >
                   {t('projects.open')}
                 </Link>
