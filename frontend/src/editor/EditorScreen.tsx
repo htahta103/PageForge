@@ -12,7 +12,7 @@ import { useT } from '@/i18n/context'
 import { exportPage } from '@/lib/api/export'
 import { findParentId } from '@/lib/tree'
 import { getRegistration } from '@/registry'
-import { useEditorStore } from '@/store/editorStore'
+import { useEditorStore, useTemporalEditor } from '@/store/editorStore'
 import type { ComponentType } from '@/types/api'
 
 import { Canvas } from './Canvas'
@@ -35,6 +35,8 @@ export function EditorScreen() {
   const addComponent = useEditorStore((s) => s.addComponent)
   const reorderWithinParent = useEditorStore((s) => s.reorderWithinParent)
   const deleteSelected = useEditorStore((s) => s.deleteSelected)
+
+  const temporal = useTemporalEditor()
 
   const [exportOpen, setExportOpen] = useState(false)
   const [exportText, setExportText] = useState('')
@@ -168,14 +170,14 @@ export function EditorScreen() {
             <button
               type="button"
               className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
-              disabled
+              onClick={() => temporal.getState().undo()}
             >
               {t('editor.undo')}
             </button>
             <button
               type="button"
               className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
-              disabled
+              onClick={() => temporal.getState().redo()}
             >
               {t('editor.redo')}
             </button>
