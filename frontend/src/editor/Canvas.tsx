@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core'
+import { useMemo } from 'react'
 
 import { useT } from '@/i18n/context'
 import { getRootIds } from '@/lib/tree'
@@ -8,7 +9,8 @@ import { CanvasNode } from './CanvasNode'
 
 export function Canvas() {
   const t = useT()
-  const roots = useEditorStore((s) => getRootIds(s.components))
+  const components = useEditorStore((s) => s.components)
+  const roots = useMemo(() => getRootIds(components), [components])
   const select = useEditorStore((s) => s.select)
 
   const { setNodeRef, isOver } = useDroppable({ id: 'drop-root' })

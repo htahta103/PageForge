@@ -1,6 +1,7 @@
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useMemo } from 'react'
 
 import { useT } from '@/i18n/context'
 import { getRootIds, getSortedChildrenIds } from '@/lib/tree'
@@ -80,11 +81,11 @@ function LayerGroup({
   parentId: string | null
   depth: number
 }) {
-  const ids = useEditorStore((s) => {
-    if (!parentId) return getRootIds(s.components)
-    return getSortedChildrenIds(s.components, parentId)
-  })
   const map = useEditorStore((s) => s.components)
+  const ids = useMemo(() => {
+    if (!parentId) return getRootIds(map)
+    return getSortedChildrenIds(map, parentId)
+  }, [map, parentId])
 
   if (ids.length === 0) return null
 

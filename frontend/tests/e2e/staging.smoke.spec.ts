@@ -27,7 +27,7 @@ test.describe('staging smoke', () => {
       consoleLines.push(`[console.${msg.type()}] ${msg.text()}`)
     })
     page.on('pageerror', (err) => {
-      pageErrors.push(`[pageerror] ${err.message}`)
+      pageErrors.push(`[pageerror] ${err.message}${err.stack ? `\n${err.stack}` : ''}`)
     })
     page.on('requestfailed', (req) => {
       const f = req.failure()
@@ -61,42 +61,75 @@ test.describe('staging smoke', () => {
     }
   })
 
-  test('can create project + page + open editor (requires VITE_API_URL set at build)', async ({
-    page,
-  }) => {
-    await page.goto('/projects')
+  test('can create project + page + open editor (requires VITE_API_URL set at build)', async (
+    { page },
+    testInfo,
+  ) => {
+    const consoleLines: string[] = []
+    const pageErrors: string[] = []
+    const failedRequests: string[] = []
 
-    await expect(page.getByTestId('projects-create-form')).toBeVisible({
-      timeout: 20_000,
+    page.on('console', (msg) => {
+      consoleLines.push(`[console.${msg.type()}] ${msg.text()}`)
+    })
+    page.on('pageerror', (err) => {
+      pageErrors.push(`[pageerror] ${err.message}`)
+    })
+    page.on('requestfailed', (req) => {
+      const f = req.failure()
+      failedRequests.push(
+        `[requestfailed] ${req.method()} ${req.url()} ${f?.errorText ?? ''}`.trim(),
+      )
     })
 
-    const projectName = `E2E ${Date.now()}`
-    await page.getByTestId('projects-name-input').fill(projectName)
-    await page.getByTestId('projects-create-button').click()
+    try {
+      await page.goto('/projects')
 
-    await expect(page.getByTestId('projects-list')).toBeVisible({
-      timeout: 20_000,
-    })
-    await expect(page.getByText(projectName)).toBeVisible({ timeout: 20_000 })
+      await expect(page.getByTestId('projects-create-form')).toBeVisible({
+        timeout: 20_000,
+      })
 
-    await page.getByRole('link', { name: 'Open' }).first().click()
+      const projectName = `E2E ${Date.now()}`
+      await page.getByTestId('projects-name-input').fill(projectName)
+      await page.getByTestId('projects-create-button').click()
 
-    await expect(page.getByTestId('pages-create-form')).toBeVisible({
-      timeout: 20_000,
-    })
+      await expect(page.getByTestId('projects-list')).toBeVisible({
+        timeout: 20_000,
+      })
+      await expect(page.getByText(projectName)).toBeVisible({ timeout: 20_000 })
 
-    const pageName = `Home ${Date.now()}`
-    await page.getByTestId('pages-name-input').fill(pageName)
-    await page.getByTestId('pages-create-button').click()
+      await page.getByRole('link', { name: 'Open' }).first().click()
 
-    await expect(page.getByTestId('pages-list')).toBeVisible()
-    await expect(page.getByText(pageName)).toBeVisible()
+      await expect(page.getByTestId('pages-create-form')).toBeVisible({
+        timeout: 20_000,
+      })
 
-    await page.getByRole('link', { name: 'Edit' }).first().click()
+      const pageName = `Home ${Date.now()}`
+      await page.getByTestId('pages-name-input').fill(pageName)
+      await page.getByTestId('pages-create-button').click()
 
-    await expect(page.getByTestId('editor-screen')).toBeVisible()
-    await expect(page.getByTestId('editor-canvas')).toBeVisible()
-    await expect(page.getByTestId('editor-save')).toBeVisible()
+      await expect(page.getByTestId('pages-list')).toBeVisible()
+      await expect(page.getByText(pageName)).toBeVisible()
+
+      await page.getByRole('link', { name: 'Edit' }).first().click()
+
+      await expect(page.getByTestId('editor-screen')).toBeVisible()
+      await expect(page.getByTestId('editor-canvas')).toBeVisible()
+      await expect(page.getByTestId('editor-save')).toBeVisible()
+    } finally {
+      await testInfo.attach('pages-console.log', {
+        body: (consoleLines.join('\n') || '(no console logs)') + '\n',
+        contentType: 'text/plain',
+      })
+      await testInfo.attach('pages-pageerrors.log', {
+        body: (pageErrors.join('\n') || '(no page errors)') + '\n',
+        contentType: 'text/plain',
+      })
+      await testInfo.attach('pages-requestfailed.log', {
+        body: (failedRequests.join('\n') || '(no failed requests)') + '\n',
+        contentType: 'text/plain',
+      })
+    }
   })
 })
 

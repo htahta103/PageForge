@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core'
+import { useMemo } from 'react'
 
 import { useT } from '@/i18n/context'
 import {
@@ -22,9 +23,11 @@ import { useEditorStore } from '@/store/editorStore'
 
 export function CanvasNode({ id }: { id: string }) {
   const t = useT()
-  const comp = useEditorStore((s) => s.components[id])
-  const childIds = useEditorStore((s) =>
-    comp ? getSortedChildrenIds(s.components, id) : [],
+  const components = useEditorStore((s) => s.components)
+  const comp = components[id]
+  const childIds = useMemo(
+    () => (comp ? getSortedChildrenIds(components, id) : []),
+    [components, id, comp],
   )
   const select = useEditorStore((s) => s.select)
   const selected = useEditorStore((s) => s.selectedIds.includes(id))

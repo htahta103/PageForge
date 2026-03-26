@@ -12,7 +12,7 @@ import { useT } from '@/i18n/context'
 import { exportPage } from '@/lib/api/export'
 import { findParentId } from '@/lib/tree'
 import { getRegistration } from '@/registry'
-import { useEditorStore, useTemporalEditor } from '@/store/editorStore'
+import { useEditorStore } from '@/store/editorStore'
 import type { ComponentType } from '@/types/api'
 
 import { Canvas } from './Canvas'
@@ -36,8 +36,6 @@ export function EditorScreen() {
   const reorderWithinParent = useEditorStore((s) => s.reorderWithinParent)
   const deleteSelected = useEditorStore((s) => s.deleteSelected)
 
-  const temporal = useTemporalEditor()
-
   const [exportOpen, setExportOpen] = useState(false)
   const [exportText, setExportText] = useState('')
 
@@ -48,7 +46,10 @@ export function EditorScreen() {
   useEffect(() => {
     if (!projectId || !pageId) return
     void load(projectId, pageId)
-  }, [projectId, pageId, load])
+    // `load` comes from zustand; in practice it should be referentially stable.
+    // Avoid depending on it to prevent accidental render loops if the selector
+    // returns a new function reference.
+  }, [projectId, pageId])
 
   async function onExport(format: 'html' | 'react') {
     try {
@@ -167,14 +168,14 @@ export function EditorScreen() {
             <button
               type="button"
               className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
-              onClick={() => temporal.getState().undo()}
+              disabled
             >
               {t('editor.undo')}
             </button>
             <button
               type="button"
               className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
-              onClick={() => temporal.getState().redo()}
+              disabled
             >
               {t('editor.redo')}
             </button>
