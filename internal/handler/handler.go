@@ -11,6 +11,7 @@ import (
 
 	"github.com/htahta103/PageForge/backend/internal/model"
 	"github.com/htahta103/PageForge/backend/internal/service"
+	"github.com/rs/zerolog/log"
 )
 
 type Handler struct {
@@ -52,6 +53,8 @@ func handleError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, "conflict", conflictErr.Message)
 		return
 	}
+
+	log.Error().Err(err).Msg("request failed")
 	writeError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 }
 
