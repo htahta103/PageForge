@@ -12,15 +12,47 @@ test.describe('staging smoke', () => {
     expect(body).toMatchObject({ status: 'ok' })
   })
 
-  test('pages serves SPA bundle for /projects', async ({ page }) => {
-    await page.goto('/projects')
+  test('pages serves SPA bundle for /projects', async ({ page }, testInfo) => {
+    const consoleLines: string[] = []
+    const pageErrors: string[] = []
+    const failedRequests: string[] = []
 
-    // If Pages deploy is misconfigured (wrong artifact, no SPA rewrite),
-    // this will never appear and the test will fail with a clear signal.
-    await expect(page.getByTestId('projects-create-form')).toBeVisible({
-      timeout: 20_000,
+    page.on('console', (msg) => {
+      consoleLines.push(`[console.${msg.type()}] ${msg.text()}`)
     })
-    await expect(page.getByTestId('projects-name-input')).toBeVisible()
+    page.on('pageerror', (err) => {
+      pageErrors.push(`[pageerror] ${err.message}`)
+    })
+    page.on('requestfailed', (req) => {
+      const f = req.failure()
+      failedRequests.push(
+        `[requestfailed] ${req.method()} ${req.url()} ${f?.errorText ?? ''}`.trim(),
+      )
+    })
+
+    try {
+      await page.goto('/projects')
+
+      // If Pages deploy is misconfigured (wrong artifact, no SPA rewrite),
+      // this will never appear and the test will fail with a clear signal.
+      await expect(page.getByTestId('projects-create-form')).toBeVisible({
+        timeout: 20_000,
+      })
+      await expect(page.getByTestId('projects-name-input')).toBeVisible()
+    } finally {
+      await testInfo.attach('pages-console.log', {
+        body: (consoleLines.join('\n') || '(no console logs)') + '\n',
+        contentType: 'text/plain',
+      })
+      await testInfo.attach('pages-pageerrors.log', {
+        body: (pageErrors.join('\n') || '(no page errors)') + '\n',
+        contentType: 'text/plain',
+      })
+      await testInfo.attach('pages-requestfailed.log', {
+        body: (failedRequests.join('\n') || '(no failed requests)') + '\n',
+        contentType: 'text/plain',
+      })
+    }
   })
 
   test('can create project + page + open editor (requires VITE_API_URL set at build)', async ({
