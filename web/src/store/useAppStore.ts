@@ -9,6 +9,31 @@ import type {
 
 const ROOT_ID: ComponentId = 'root'
 
+function findParentId(
+  components: Record<ComponentId, ComponentNode>,
+  childId: ComponentId,
+): ComponentId | null {
+  for (const [pid, node] of Object.entries(components)) {
+    if (node.children.includes(childId)) return pid
+  }
+  return null
+}
+
+/** True if candidateId is draggedId or nested under draggedId (invalid reparent target). */
+function isUnderDragged(
+  components: Record<ComponentId, ComponentNode>,
+  draggedId: ComponentId,
+  candidateId: ComponentId,
+): boolean {
+  if (candidateId === draggedId) return true
+  let cur: ComponentId | null = findParentId(components, candidateId)
+  while (cur) {
+    if (cur === draggedId) return true
+    cur = findParentId(components, cur)
+  }
+  return false
+}
+
 export interface AppState {
   components: Record<ComponentId, ComponentNode>
   selectedIds: ComponentId[]
@@ -25,6 +50,8 @@ export interface AppActions {
   deleteComponents: (ids: ComponentId[]) => void
   setProp: (id: ComponentId, key: string, value: unknown) => void
   clearPropOverride: (id: ComponentId, key: string) => void
+  /** Move a node to destParentId at index (0-based, relative to children before the move). */
+  moveNode: (draggedId: ComponentId, destParentId: ComponentId, destIndex: number) => void
 }
 
 const rootNode: ComponentNode = { id: ROOT_ID, type: 'Root', props: {}, children: [] }
@@ -151,6 +178,43 @@ export const useAppStore = create<AppState & AppActions>()(
               [id]: { ...node, breakpointOverrides: finalOv },
             },
           }
+        })
+      },
+      moveNode: (draggedId, destParentId, destIndex) => {
+        set((state) => {
+          const { components } = state
+          if (draggedId === ROOT_ID) return state
+          const dragged = components[draggedId]
+          const destParent = components[destParentId]
+          if (!dragged || !destParent) return state
+          if (isUnderDragged(components, draggedId, destParentId)) return state
+
+          const oldParentId = findParentId(components, draggedId)
+          if (!oldParentId) return state
+          const oldParent = components[oldParentId]
+          if (!oldParent) return state
+          const oldIdx = oldParent.children.indexOf(draggedId)
+          if (oldIdx < 0) return state
+
+          const next: Record<ComponentId, ComponentNode> = { ...components }
+
+          const oldChildren = [...oldParent.children]
+          oldChildren.splice(oldIdx, 1)
+          next[oldParentId] = { ...oldParent, children: oldChildren }
+
+          const updatedDest = next[destParentId]
+          if (!updatedDest) return state
+          const destChildren = [...updatedDest.children]
+
+          let insertAt = destIndex
+          if (oldParentId === destParentId) {
+            if (destIndex > oldIdx) insertAt = destIndex - 1
+          }
+          insertAt = Math.max(0, Math.min(insertAt, destChildren.length))
+          destChildren.splice(insertAt, 0, draggedId)
+          next[destParentId] = { ...updatedDest, children: destChildren }
+
+          return { components: next }
         })
       },
     }),
