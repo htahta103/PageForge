@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2026-03-26"
 account_id = "353a69adadf77371f073ef6bb0a66f4c"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "pageforge_staging"
+database_id = "75a063eb-f549-491a-a2ec-02ebc1cd7a75"
+
 [vars]
 # Set this to your hosted Go API base, e.g. "https://api-staging.example.com"
 # The worker will proxy requests to: ${ORIGIN_URL}/api/v1/*
