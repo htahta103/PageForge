@@ -8,7 +8,9 @@
 ## What is deployed
 
 - Static SPA built from `frontend/` (Vite production build).
-- **API:** Not served from this hostname. Full-stack staging (Go + Postgres behind `/api`) is still local/Docker for now unless a separate API base URL is configured for builds.
+- **API (staging):** Cloudflare Worker proxy at https://pageforge-api-staging.htahta103.workers.dev
+  - Frontend should be built with `VITE_API_URL=https://pageforge-api-staging.htahta103.workers.dev` (the app will append `/api/v1` if missing).
+  - The Worker proxies `/api/v1/*` to `ORIGIN_URL` (currently requires configuration + redeploy to serve the full API).
 
 ## Access
 
@@ -18,6 +20,7 @@
 
 ```bash
 curl -sfI https://pageforge-staging.pages.dev | head -5
+curl -sf https://pageforge-api-staging.htahta103.workers.dev/health
 ```
 
 Expect `HTTP/2 200` (or 304) for the document shell.
