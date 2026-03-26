@@ -5,6 +5,7 @@ import { getDefinition } from '../registry/registry'
 import { isNodeLocked, isNodeVisible, useAppStore } from '../store/useAppStore'
 import { layoutToStyle, normalizeLayout } from '../utils/componentLayout'
 import { resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
+import { normalizeSurface, surfaceToStyle } from '../utils/componentSurface'
 import { useCanvasViewport } from './CanvasViewportContext'
 
 const ROOT_ID: ComponentId = 'root'
@@ -34,6 +35,7 @@ function NodeView({ id }: { id: ComponentId }) {
   )
 
   const layoutStyle = layoutToStyle(normalizeLayout(resolvedProps.layout))
+  const surfaceStyle = surfaceToStyle(normalizeSurface(resolvedProps.surface))
 
   return (
     <div
@@ -42,7 +44,7 @@ function NodeView({ id }: { id: ComponentId }) {
         selected ? 'ring-2 ring-[color:var(--color-primary)]' : 'hover:ring-1 hover:ring-black/10',
         locked ? 'cursor-not-allowed' : '',
       ].join(' ')}
-      style={layoutStyle}
+      style={{ ...layoutStyle, ...surfaceStyle }}
       role="button"
       tabIndex={locked ? -1 : 0}
       onClick={(e) => {

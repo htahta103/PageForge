@@ -4,6 +4,13 @@ import type { BreakpointId } from '../types/components'
 import { normalizeLayout, type LayoutState } from '../utils/componentLayout'
 import { isPropOverridden, resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
 import {
+  DEFAULT_SURFACE,
+  normalizeSurface,
+  type BackgroundMode,
+  type BorderStyleMode,
+  type SurfaceState,
+} from '../utils/componentSurface'
+import {
   DEFAULT_TYPOGRAPHY,
   FONT_PRESETS,
   TYPOGRAPHY_WEIGHT_OPTIONS,
@@ -613,6 +620,426 @@ function TypographyInspectorSection({
 
 const ROOT_ID = 'root'
 
+function SurfaceInspectorSection({
+  surface,
+  onChange,
+}: {
+  surface: unknown
+  onChange: (next: SurfaceState) => void
+}) {
+  const S = normalizeSurface(surface)
+
+  const patch = (partial: Partial<SurfaceState>) => {
+    onChange({
+      ...S,
+      ...partial,
+      background: { ...S.background, ...partial.background },
+      border: { ...S.border, ...partial.border },
+      effects: { ...S.effects, ...partial.effects },
+    })
+  }
+
+  const setBackground = (partial: Partial<SurfaceState['background']>) => {
+    patch({ background: { ...S.background, ...partial } })
+  }
+
+  const setBorder = (partial: Partial<SurfaceState['border']>) => {
+    patch({ border: { ...S.border, ...partial } })
+  }
+
+  const setEffects = (partial: Partial<SurfaceState['effects']>) => {
+    patch({ effects: { ...S.effects, ...partial } })
+  }
+
+  return (
+    <>
+      <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
+        <div className={labelClass}>Background</div>
+
+        <label className="block space-y-1">
+          <div className={subMuted}>Fill type</div>
+          <select
+            className={inputClass}
+            value={S.background.mode}
+            onChange={(e) => setBackground({ mode: e.target.value as BackgroundMode })}
+          >
+            <option value="none">None</option>
+            <option value="color">Solid color</option>
+            <option value="gradient">Gradient</option>
+            <option value="image">Image URL</option>
+          </select>
+        </label>
+
+        {S.background.mode === 'color' ? (
+          <label className="block space-y-1">
+            <div className={subMuted}>Color</div>
+            <div className="flex items-center gap-2">
+              <input
+                aria-label="Background color"
+                className="h-9 w-14 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
+                type="color"
+                value={S.background.color}
+                onChange={(e) => setBackground({ color: e.target.value })}
+              />
+              <input
+                className={inputClass}
+                placeholder="#ffffff"
+                spellCheck={false}
+                type="text"
+                value={S.background.color}
+                onChange={(e) => setBackground({ color: e.target.value })}
+              />
+            </div>
+          </label>
+        ) : null}
+
+        {S.background.mode === 'gradient' ? (
+          <div className="space-y-2">
+            <label className="block space-y-1">
+              <div className={subMuted}>Angle (deg)</div>
+              <input
+                className={inputClass}
+                type="text"
+                inputMode="decimal"
+                value={S.background.gradientAngle}
+                onChange={(e) => setBackground({ gradientAngle: e.target.value })}
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block space-y-1">
+                <div className={subMuted}>From color</div>
+                <div className="flex items-center gap-1">
+                  <input
+                    aria-label="Gradient from"
+                    className="h-9 w-12 shrink-0 cursor-pointer rounded border border-[color:var(--color-border)]"
+                    type="color"
+                    value={S.background.gradientFromColor}
+                    onChange={(e) => setBackground({ gradientFromColor: e.target.value })}
+                  />
+                  <input
+                    className={`${inputClass} !px-2`}
+                    type="text"
+                    value={S.background.gradientFromColor}
+                    onChange={(e) => setBackground({ gradientFromColor: e.target.value })}
+                  />
+                </div>
+              </label>
+              <label className="block space-y-1">
+                <div className={subMuted}>From stop (%)</div>
+                <input
+                  className={inputClass}
+                  placeholder="0"
+                  type="text"
+                  inputMode="decimal"
+                  value={S.background.gradientFromStop}
+                  onChange={(e) => setBackground({ gradientFromStop: e.target.value })}
+                />
+              </label>
+              <label className="block space-y-1">
+                <div className={subMuted}>To color</div>
+                <div className="flex items-center gap-1">
+                  <input
+                    aria-label="Gradient to"
+                    className="h-9 w-12 shrink-0 cursor-pointer rounded border border-[color:var(--color-border)]"
+                    type="color"
+                    value={S.background.gradientToColor}
+                    onChange={(e) => setBackground({ gradientToColor: e.target.value })}
+                  />
+                  <input
+                    className={`${inputClass} !px-2`}
+                    type="text"
+                    value={S.background.gradientToColor}
+                    onChange={(e) => setBackground({ gradientToColor: e.target.value })}
+                  />
+                </div>
+              </label>
+              <label className="block space-y-1">
+                <div className={subMuted}>To stop (%)</div>
+                <input
+                  className={inputClass}
+                  placeholder="100"
+                  type="text"
+                  inputMode="decimal"
+                  value={S.background.gradientToStop}
+                  onChange={(e) => setBackground({ gradientToStop: e.target.value })}
+                />
+              </label>
+            </div>
+          </div>
+        ) : null}
+
+        {S.background.mode === 'image' ? (
+          <div className="space-y-2">
+            <label className="block space-y-1">
+              <div className={subMuted}>Image URL</div>
+              <input
+                className={inputClass}
+                placeholder="https://…"
+                spellCheck={false}
+                type="url"
+                value={S.background.imageUrl}
+                onChange={(e) => setBackground({ imageUrl: e.target.value })}
+              />
+            </label>
+            <label className="block space-y-1">
+              <div className={subMuted}>Size</div>
+              <select
+                className={inputClass}
+                value={S.background.imageSize}
+                onChange={(e) =>
+                  setBackground({
+                    imageSize: e.target.value as SurfaceState['background']['imageSize'],
+                  })
+                }
+              >
+                <option value="cover">Cover</option>
+                <option value="contain">Contain</option>
+                <option value="auto">Auto</option>
+              </select>
+            </label>
+            <label className="block space-y-1">
+              <div className={subMuted}>Position</div>
+              <input
+                className={inputClass}
+                placeholder="center"
+                type="text"
+                value={S.background.imagePosition}
+                onChange={(e) => setBackground({ imagePosition: e.target.value })}
+              />
+            </label>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
+        <div className={labelClass}>Border</div>
+
+        <div className="space-y-1">
+          <div className={subMuted}>Width (px per side)</div>
+          <div className="grid grid-cols-4 gap-1">
+            {(
+              [
+                ['widthTop', 'T'],
+                ['widthRight', 'R'],
+                ['widthBottom', 'B'],
+                ['widthLeft', 'L'],
+              ] as const
+            ).map(([key, lbl]) => (
+              <label key={key} className="block space-y-0.5">
+                <div className="text-[10px] uppercase text-[color:var(--color-muted)]">{lbl}</div>
+                <input
+                  className={`${inputClass} !px-2 !py-1 text-xs`}
+                  placeholder="0"
+                  type="text"
+                  inputMode="numeric"
+                  value={S.border[key]}
+                  onChange={(e) => setBorder({ [key]: e.target.value } as Partial<SurfaceState['border']>)}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <label className="block space-y-1">
+          <div className={subMuted}>Style</div>
+          <select
+            className={inputClass}
+            value={S.border.style}
+            onChange={(e) => setBorder({ style: e.target.value as BorderStyleMode })}
+          >
+            <option value="none">None</option>
+            <option value="solid">Solid</option>
+            <option value="dashed">Dashed</option>
+            <option value="dotted">Dotted</option>
+            <option value="double">Double</option>
+          </select>
+        </label>
+
+        <label className="block space-y-1">
+          <div className={subMuted}>Color</div>
+          <div className="flex items-center gap-2">
+            <input
+              aria-label="Border color"
+              className="h-9 w-14 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
+              type="color"
+              value={S.border.color}
+              onChange={(e) => setBorder({ color: e.target.value })}
+            />
+            <input
+              className={inputClass}
+              spellCheck={false}
+              type="text"
+              value={S.border.color}
+              onChange={(e) => setBorder({ color: e.target.value })}
+            />
+          </div>
+        </label>
+
+        <div className="space-y-1">
+          <div className={subMuted}>Radius (px per corner)</div>
+          <div className="grid grid-cols-4 gap-1">
+            {(
+              [
+                ['radiusTL', 'TL'],
+                ['radiusTR', 'TR'],
+                ['radiusBR', 'BR'],
+                ['radiusBL', 'BL'],
+              ] as const
+            ).map(([key, lbl]) => (
+              <label key={key} className="block space-y-0.5">
+                <div className="text-[10px] uppercase text-[color:var(--color-muted)]">{lbl}</div>
+                <input
+                  className={`${inputClass} !px-2 !py-1 text-xs`}
+                  placeholder="—"
+                  type="text"
+                  inputMode="numeric"
+                  value={S.border[key]}
+                  onChange={(e) => setBorder({ [key]: e.target.value } as Partial<SurfaceState['border']>)}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
+        <div className={labelClass}>Effects</div>
+
+        <label className="flex items-center justify-between gap-2 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-2">
+          <div className="text-xs font-medium">Box shadow</div>
+          <input
+            checked={S.effects.shadowEnabled}
+            type="checkbox"
+            onChange={(e) => setEffects({ shadowEnabled: e.target.checked })}
+          />
+        </label>
+
+        {S.effects.shadowEnabled ? (
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                ['shadowX', 'X offset (px)'],
+                ['shadowY', 'Y offset (px)'],
+                ['shadowBlur', 'Blur (px)'],
+                ['shadowSpread', 'Spread (px)'],
+              ] as const
+            ).map(([key, lbl]) => (
+              <label key={key} className="block space-y-1">
+                <div className={subMuted}>{lbl}</div>
+                <input
+                  className={inputClass}
+                  type="text"
+                  inputMode="decimal"
+                  value={S.effects[key]}
+                  onChange={(e) => setEffects({ [key]: e.target.value } as Partial<SurfaceState['effects']>)}
+                />
+              </label>
+            ))}
+            <label className="col-span-2 block space-y-1">
+              <div className={subMuted}>Shadow color</div>
+              <div className="flex items-center gap-2">
+                <input
+                  aria-label="Shadow color"
+                  className="h-9 w-14 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
+                  type="color"
+                  value={
+                    /^#[0-9a-fA-F]{6}$/.test(S.effects.shadowColor.trim())
+                      ? S.effects.shadowColor.trim()
+                      : '#000000'
+                  }
+                  onChange={(e) => setEffects({ shadowColor: e.target.value })}
+                />
+                <input
+                  className={inputClass}
+                  placeholder="rgba(0,0,0,0.15)"
+                  spellCheck={false}
+                  type="text"
+                  value={S.effects.shadowColor}
+                  onChange={(e) => setEffects({ shadowColor: e.target.value })}
+                />
+              </div>
+            </label>
+          </div>
+        ) : null}
+
+        <label className="block space-y-1">
+          <div className={subMuted}>Opacity (%)</div>
+          <input
+            className={inputClass}
+            max={100}
+            min={0}
+            step={1}
+            type="range"
+            value={
+              S.effects.opacityPercent === ''
+                ? 100
+                : Math.min(100, Math.max(0, Number(S.effects.opacityPercent) || 0))
+            }
+            onChange={(e) => setEffects({ opacityPercent: e.target.value === '100' ? '' : e.target.value })}
+          />
+          <div className="text-[11px] text-[color:var(--color-muted)]">
+            {S.effects.opacityPercent === '' ? '100% (default)' : `${S.effects.opacityPercent}%`}
+          </div>
+        </label>
+
+        <label className="block space-y-1">
+          <div className={subMuted}>Overflow</div>
+          <select
+            className={inputClass}
+            value={S.effects.overflow || '__default__'}
+            onChange={(e) =>
+              setEffects({
+                overflow:
+                  e.target.value === '__default__'
+                    ? ''
+                    : (e.target.value as SurfaceState['effects']['overflow']),
+              })
+            }
+          >
+            <option value="__default__">Default (inherit)</option>
+            <option value="visible">Visible</option>
+            <option value="hidden">Hidden</option>
+            <option value="auto">Auto</option>
+            <option value="scroll">Scroll</option>
+          </select>
+        </label>
+
+        <label className="block space-y-1">
+          <div className={subMuted}>Cursor</div>
+          <select
+            className={inputClass}
+            value={S.effects.cursor || '__default__'}
+            onChange={(e) =>
+              setEffects({
+                cursor:
+                  e.target.value === '__default__'
+                    ? ''
+                    : (e.target.value as SurfaceState['effects']['cursor']),
+              })
+            }
+          >
+            <option value="__default__">Default (inherit)</option>
+            <option value="default">Default</option>
+            <option value="pointer">Pointer</option>
+            <option value="text">Text</option>
+            <option value="move">Move</option>
+            <option value="grab">Grab</option>
+            <option value="not-allowed">Not allowed</option>
+          </select>
+        </label>
+
+        <button
+          className="w-full rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs hover:bg-black/5"
+          type="button"
+          onClick={() => onChange({ ...DEFAULT_SURFACE, background: { ...DEFAULT_SURFACE.background }, border: { ...DEFAULT_SURFACE.border }, effects: { ...DEFAULT_SURFACE.effects } })}
+        >
+          Reset appearance
+        </button>
+      </div>
+    </>
+  )
+}
+
 export function Inspector() {
   const selectedId = useAppStore((s) => s.selectedIds[0] ?? null)
   const node = useAppStore((s) => (selectedId ? s.components[selectedId] : null))
@@ -637,6 +1064,7 @@ export function Inspector() {
   const showTypography = Boolean(def?.supportsTypography)
   const resolvedProps = resolvePropsForBreakpoint(node, activeBreakpoint)
   const layoutOverridden = isPropOverridden(node, activeBreakpoint, 'layout')
+  const surfaceOverridden = isPropOverridden(node, activeBreakpoint, 'surface')
   const typographyOverridden = isPropOverridden(node, activeBreakpoint, 'typography')
   const locked = isNodeLocked(node)
 
@@ -696,6 +1124,20 @@ export function Inspector() {
             }
             onChange={(next) => setProp(node.id, 'layout', next)}
           />
+
+          <div className="space-y-2">
+            <OverrideChrome
+              activeBreakpoint={activeBreakpoint}
+              isOverridden={surfaceOverridden}
+              onClear={
+                surfaceOverridden ? () => clearPropOverride(node.id, 'surface') : undefined
+              }
+            />
+            <SurfaceInspectorSection
+              surface={resolvedProps.surface}
+              onChange={(next) => setProp(node.id, 'surface', next)}
+            />
+          </div>
 
           {showTypography ? (
             <div className="space-y-2">
