@@ -6,7 +6,13 @@ test.describe('staging smoke', () => {
     'https://pageforge-api-staging.htahta103.workers.dev'
 
   test('api worker health returns JSON', async ({ request }) => {
-    const res = await request.get(`${apiOrigin}/health`)
+    // Fly backend exposes health at /api/v1/health (not /health).
+    // Keep a small fallback for older staging setups.
+    const primaryRes = await request.get(`${apiOrigin}/api/v1/health`)
+    const res =
+      primaryRes.status() === 404
+        ? await request.get(`${apiOrigin}/health`)
+        : primaryRes
     expect(res.ok()).toBeTruthy()
     const body = await res.json()
     expect(body).toMatchObject({ status: 'ok' })
