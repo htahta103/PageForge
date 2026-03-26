@@ -87,7 +87,7 @@ export function Canvas() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              addComponent('Card')
+              addComponent('Card', 'root', getDefinition('Card')?.defaults ?? {})
             }}
           >
             Quick add Card

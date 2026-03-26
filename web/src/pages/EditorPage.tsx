@@ -1,11 +1,13 @@
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
-import { useAppStore } from '../store/useAppStore'
+import { useEffect } from 'react'
+import { canvasRedo, canvasUndo, useAppStore } from '../store/useAppStore'
 import { getDefinition } from '../registry/registry'
 import { BreakpointToolbar } from '../editor/BreakpointToolbar'
 import { LayerTree } from '../editor/LayerTree'
 import { Palette } from '../editor/Palette'
 import { Canvas } from '../editor/Canvas'
 import { Inspector } from '../editor/Inspector'
+import { UndoRedoToolbar } from '../editor/UndoRedoToolbar'
 
 type PaletteDragData = { kind: 'palette'; componentType: string }
 
@@ -15,15 +17,56 @@ function isPaletteDragData(value: unknown): value is PaletteDragData {
   return v.kind === 'palette' && typeof v.componentType === 'string'
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!target || !(target instanceof HTMLElement)) return false
+  if (target.isContentEditable) return true
+  return Boolean(target.closest('input, textarea, select'))
+}
+
 export function EditorPage() {
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
   const addComponent = useAppStore((s) => s.addComponent)
+  const deleteComponents = useAppStore((s) => s.deleteComponents)
   const components = useAppStore((s) => s.components)
 
   ensureInitialized()
 
   const hasRoot = Boolean(components.root)
   const paletteCount = Object.keys(components).length - (hasRoot ? 1 : 0)
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) {
+        return
+      }
+
+      if (e.metaKey || e.ctrlKey) {
+        const key = e.key.toLowerCase()
+        if (key === 'z') {
+          e.preventDefault()
+          if (e.shiftKey) canvasRedo()
+          else canvasUndo()
+          return
+        }
+        if (key === 'y' && e.ctrlKey && !e.metaKey) {
+          e.preventDefault()
+          canvasRedo()
+          return
+        }
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const { selectedIds } = useAppStore.getState()
+        const toDel = selectedIds.filter((id) => id !== 'root')
+        if (toDel.length > 0) {
+          e.preventDefault()
+          deleteComponents(toDel)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [deleteComponents])
 
   function onDragEnd(event: DragEndEvent) {
     const overId = event.over?.id
@@ -33,25 +76,25 @@ export function EditorPage() {
 
     const type = data.componentType
     const def = getDefinition(type)
-    const id = addComponent(type)
     const defaults = def?.defaults ?? {}
-    for (const [k, v] of Object.entries(defaults)) {
-      useAppStore.getState().setProp(id, k, v)
-    }
+    addComponent(type, 'root', defaults)
   }
 
   return (
     <DndContext onDragEnd={onDragEnd}>
       <div className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Editor</h1>
             <p className="text-sm text-[color:var(--color-muted)]">
               Minimal WYSIWYG scaffold: palette → canvas → inspector.
             </p>
           </div>
-          <div className="text-xs text-[color:var(--color-muted)]">
-            Nodes: <span className="font-mono">{paletteCount}</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <UndoRedoToolbar />
+            <div className="text-xs text-[color:var(--color-muted)]">
+              Nodes: <span className="font-mono">{paletteCount}</span>
+            </div>
           </div>
         </div>
 
@@ -81,11 +124,8 @@ export function EditorPage() {
                 type="button"
                 onClick={() => {
                   const def = getDefinition(t)
-                  const id = addComponent(t)
                   const defaults = def?.defaults ?? {}
-                  for (const [k, v] of Object.entries(defaults)) {
-                    useAppStore.getState().setProp(id, k, v)
-                  }
+                  addComponent(t, 'root', defaults)
                 }}
               >
                 {t}

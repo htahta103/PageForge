@@ -563,10 +563,13 @@ function TypographyInspectorSection({
   )
 }
 
+const ROOT_ID = 'root'
+
 export function Inspector() {
   const selectedId = useAppStore((s) => s.selectedIds[0] ?? null)
   const node = useAppStore((s) => (selectedId ? s.components[selectedId] : null))
   const setProp = useAppStore((s) => s.setProp)
+  const deleteComponents = useAppStore((s) => s.deleteComponents)
 
   if (!selectedId || !node) {
     return (
@@ -587,7 +590,18 @@ export function Inspector() {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-semibold">Inspector</div>
-        <div className="text-xs text-[color:var(--color-muted)]">{node.type}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-[color:var(--color-muted)]">{node.type}</div>
+          {selectedId !== ROOT_ID ? (
+            <button
+              type="button"
+              className="rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+              onClick={() => deleteComponents([selectedId])}
+            >
+              Delete
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">

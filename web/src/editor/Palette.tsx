@@ -3,6 +3,8 @@ import { useDraggable } from '@dnd-kit/core'
 import { registry } from '../registry/registry'
 import { useAppStore } from '../store/useAppStore'
 
+const ROOT_ID = 'root'
+
 function PaletteItem({ type, title }: { type: string; title: string }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette:${type}`,
@@ -48,11 +50,7 @@ export function Palette() {
               className="w-full rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs text-[color:var(--color-muted)] hover:bg-black/5"
               type="button"
               onClick={() => {
-                const id = addComponent(d.type)
-                const defaults = d.defaults ?? {}
-                for (const [k, v] of Object.entries(defaults)) {
-                  useAppStore.getState().setProp(id, k, v)
-                }
+                addComponent(d.type, ROOT_ID, d.defaults ?? {})
               }}
             >
               Add
