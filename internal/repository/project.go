@@ -31,7 +31,7 @@ func (r *Repository) ListProjects(ctx context.Context, limit, offset int) ([]mod
 	}
 	defer rows.Close()
 
-	var projects []model.ProjectSummary
+	projects := make([]model.ProjectSummary, 0)
 	for rows.Next() {
 		var p model.ProjectSummary
 		if err := rows.Scan(&p.ID, &p.Name, &p.PageCount, &p.CreatedAt, &p.UpdatedAt); err != nil {
