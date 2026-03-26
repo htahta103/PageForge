@@ -10,7 +10,9 @@ import (
 	"github.com/htahta103/PageForge/backend/internal/model"
 )
 
-const projectsRequestTimeout = 20 * time.Second
+// Keep this below the server WriteTimeout (30s) so Fly can return a JSON error
+// instead of timing out at the gateway layer.
+const projectsRequestTimeout = 27 * time.Second
 
 func (h *Handler) ListProjects(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
