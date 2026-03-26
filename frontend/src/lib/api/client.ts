@@ -36,6 +36,16 @@ export async function apiFetch<T>(
   if (res.status === 204) return undefined as T
 
   const body = await parseBody(res)
+
+  // If we got HTML/text back (common misconfig symptom: Pages serving SPA HTML),
+  // fail closed even on 2xx so UI can show an error state instead of crashing.
+  if (typeof body === 'string') {
+    throw new ApiError('Unexpected non-JSON response from API', {
+      status: res.status,
+      body,
+    })
+  }
+
   if (!res.ok) {
     throw new ApiError(getApiErrorMessage(body), {
       status: res.status,
