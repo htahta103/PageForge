@@ -18,7 +18,7 @@ backend/tmp/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
-*.tsbuildinfo
+frontend/*.tsbuildinfo
 
 # IDE
 .idea/
