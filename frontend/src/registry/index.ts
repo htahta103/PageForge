@@ -16,5 +16,14 @@ export function listPaletteRegistrations(): Registration[] {
     registrations.image,
     registrations.button,
     registrations.container,
+    registrations.input,
+    registrations.card,
+    registrations.nav,
+    registrations.list,
+    registrations.icon,
+    registrations.divider,
+    registrations.spacer,
+    registrations.video,
+    registrations['custom-html'],
   ].filter(Boolean) as Registration[]
 }

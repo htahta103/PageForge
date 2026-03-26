@@ -63,7 +63,10 @@ function SortableRow({
         </button>
         <span className="text-xs text-neutral-500">{component.type}</span>
       </div>
-      {component.type === 'container' && (
+      {(component.type === 'container' ||
+        component.type === 'card' ||
+        component.type === 'nav' ||
+        component.type === 'list') && (
         <LayerGroup parentId={id} depth={depth + 1} />
       )}
     </div>

@@ -75,6 +75,43 @@ export function PropertyPanel() {
         </Field>
       )}
 
+      {comp.type === 'input' && (
+        <>
+          <Field label={t('prop.input.placeholder')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.placeholder ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { placeholder: e.target.value } })
+              }
+            />
+          </Field>
+          <Field label={t('prop.input.name')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.name ?? '')}
+              onChange={(e) => updateSelected({ props: { name: e.target.value } })}
+            />
+          </Field>
+          <Field label={t('prop.input.type')}>
+            <select
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.inputType ?? 'text')}
+              onChange={(e) =>
+                updateSelected({ props: { inputType: e.target.value } })
+              }
+            >
+              <option value="text">{t('prop.input.type.text')}</option>
+              <option value="email">{t('prop.input.type.email')}</option>
+              <option value="password">{t('prop.input.type.password')}</option>
+              <option value="number">{t('prop.input.type.number')}</option>
+              <option value="tel">{t('prop.input.type.tel')}</option>
+              <option value="url">{t('prop.input.type.url')}</option>
+            </select>
+          </Field>
+        </>
+      )}
+
       {comp.type === 'image' && (
         <>
           <Field label={t('prop.image.src')}>
@@ -111,6 +148,134 @@ export function PropertyPanel() {
             }
           />
         </Field>
+      )}
+
+      {comp.type === 'card' && (
+        <>
+          <Field label={t('prop.card.title')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.title ?? '')}
+              onChange={(e) => updateSelected({ props: { title: e.target.value } })}
+            />
+          </Field>
+          <Field label={t('prop.styles.minHeight')}>
+            <input
+              type="number"
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={parseInt(comp.styles.base.minHeight ?? '80', 10) || 80}
+              onChange={(e) =>
+                updateSelected({
+                  stylesPatch: { base: { minHeight: `${e.target.value}px` } },
+                })
+              }
+            />
+          </Field>
+        </>
+      )}
+
+      {comp.type === 'nav' && (
+        <Field label={t('prop.nav.brand')}>
+          <input
+            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            value={String(comp.props.brand ?? '')}
+            onChange={(e) => updateSelected({ props: { brand: e.target.value } })}
+          />
+        </Field>
+      )}
+
+      {comp.type === 'list' && (
+        <Field label={t('prop.list.ordered')}>
+          <select
+            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            value={String(Boolean(comp.props.ordered))}
+            onChange={(e) =>
+              updateSelected({ props: { ordered: e.target.value === 'true' } })
+            }
+          >
+            <option value="false">{t('common.no')}</option>
+            <option value="true">{t('common.yes')}</option>
+          </select>
+        </Field>
+      )}
+
+      {comp.type === 'icon' && (
+        <>
+          <Field label={t('prop.icon.glyph')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.glyph ?? '')}
+              onChange={(e) => updateSelected({ props: { glyph: e.target.value } })}
+            />
+          </Field>
+          <Field label={t('prop.a11y.ariaLabel')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.ariaLabel ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { ariaLabel: e.target.value } })
+              }
+            />
+          </Field>
+        </>
+      )}
+
+      {comp.type === 'spacer' && (
+        <Field label={t('prop.spacer.height')}>
+          <input
+            type="number"
+            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            value={parseInt(String(comp.props.height ?? '24'), 10) || 24}
+            onChange={(e) =>
+              updateSelected({
+                props: { height: parseInt(e.target.value, 10) || 0 },
+                stylesPatch: { base: { height: `${e.target.value || 0}px` } },
+              })
+            }
+          />
+        </Field>
+      )}
+
+      {comp.type === 'video' && (
+        <>
+          <Field label={t('prop.video.src')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.src ?? '')}
+              onChange={(e) => updateSelected({ props: { src: e.target.value } })}
+            />
+          </Field>
+          <Field label={t('prop.video.poster')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.poster ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { poster: e.target.value } })
+              }
+            />
+          </Field>
+        </>
+      )}
+
+      {comp.type === 'custom-html' && (
+        <>
+          <Field label={t('prop.customHtml.html')}>
+            <textarea
+              className="min-h-[120px] w-full rounded-md border border-neutral-200 px-2 py-1 font-mono text-xs"
+              value={String(comp.props.html ?? '')}
+              onChange={(e) => updateSelected({ props: { html: e.target.value } })}
+            />
+          </Field>
+          <Field label={t('prop.a11y.ariaLabel')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.ariaLabel ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { ariaLabel: e.target.value } })
+              }
+            />
+          </Field>
+        </>
       )}
     </div>
   )
