@@ -14,6 +14,7 @@ import { HistoryPanel } from '../editor/HistoryPanel'
 import { Inspector } from '../editor/Inspector'
 import { UndoRedoToolbar } from '../editor/UndoRedoToolbar'
 import { buildExportedHtml, downloadTextFile } from '../utils/exportHtmlCss'
+import { buildExportedReactTailwind } from '../utils/exportReactTailwind'
 import { deserializeToComponentRecord } from '../utils/componentTreePersistence'
 import {
   createPage,
@@ -286,6 +287,16 @@ export function EditorPage() {
               }}
             >
               Export HTML
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-fg)] hover:bg-black/5"
+              onClick={() => {
+                const tsx = buildExportedReactTailwind(components, activeBreakpoint)
+                downloadTextFile('ExportedPage.tsx', tsx, 'text/typescript;charset=utf-8')
+              }}
+            >
+              Export React + Tailwind
             </button>
             <UndoRedoToolbar />
             <div className="text-xs text-[color:var(--color-muted)]">

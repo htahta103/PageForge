@@ -3,8 +3,9 @@ import type { BreakpointId, ComponentId, ComponentNode } from '../types/componen
 import { BREAKPOINT_WIDTH_PX } from '../lib/breakpoints'
 import { layoutToStyle, normalizeLayout } from './componentLayout'
 import { normalizeTypography, typographyToStyle } from './typography'
+import { EXPORT_ROOT_ID, mapExportChildStrings, supportsTypography } from './exportShared'
 
-const ROOT_ID: ComponentId = 'root'
+const ROOT_ID: ComponentId = EXPORT_ROOT_ID
 
 const THEME_CSS = `
 :root {
@@ -278,23 +279,6 @@ function typo(node: ComponentNode): CSSProperties {
   return typographyToStyle(normalizeTypography(node.props.typography))
 }
 
-function supportsTypography(node: ComponentNode): boolean {
-  const t = node.type
-  return (
-    t === 'Button' ||
-    t === 'Text' ||
-    t === 'InputText' ||
-    t === 'InputEmail' ||
-    t === 'InputNumber' ||
-    t === 'Textarea' ||
-    t === 'Select' ||
-    t === 'Checkbox' ||
-    t === 'RadioGroup' ||
-    t === 'Card' ||
-    t === 'NavBar'
-  )
-}
-
 function typoStyleString(node: ComponentNode): string {
   if (!supportsTypography(node)) return ''
   return styleObjectToString(typo(node))
@@ -468,7 +452,7 @@ function exportNodeSubtree(id: ComponentId, components: Record<string, Component
   const node = components[id]
   if (!node) return ''
 
-  const childBlocks = node.children.map((cid) => exportNodeSubtree(cid, components, `${indent}  `)).filter(Boolean)
+  const childBlocks = mapExportChildStrings(node, indent, (cid, ind) => exportNodeSubtree(cid, components, ind))
 
   const childInner = childBlocks.join('\n')
   const layoutStr = styleObjectToString(layoutToStyle(normalizeLayout(node.props.layout)))
