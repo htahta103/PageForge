@@ -1,6 +1,14 @@
 import { getDefinition, type PropField } from '../registry/registry'
 import { useAppStore } from '../store/useAppStore'
 import { normalizeLayout, type LayoutState } from '../utils/componentLayout'
+import {
+  DEFAULT_TYPOGRAPHY,
+  FONT_PRESETS,
+  TYPOGRAPHY_WEIGHT_OPTIONS,
+  normalizeTypography,
+  type TextAlign,
+  type TypographyState,
+} from '../utils/typography'
 
 const inputClass =
   'w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm'
@@ -426,6 +434,135 @@ function Field({
   return null
 }
 
+function TypographyInspectorSection({
+  typography,
+  onChange,
+}: {
+  typography: unknown
+  onChange: (next: TypographyState) => void
+}) {
+  const T = normalizeTypography(typography)
+
+  const setAlign = (textAlign: TextAlign) => onChange({ ...T, textAlign })
+
+  return (
+    <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
+      <div className={labelClass}>Typography</div>
+
+      <label className="block space-y-1">
+        <div className={subMuted}>Font</div>
+        <select
+          className={inputClass}
+          value={T.fontFamily}
+          onChange={(e) => onChange({ ...T, fontFamily: e.target.value })}
+        >
+          {FONT_PRESETS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block space-y-1">
+          <div className={subMuted}>Size (px)</div>
+          <input
+            className={inputClass}
+            min={8}
+            max={288}
+            type="number"
+            value={T.fontSize}
+            onChange={(e) => onChange({ ...T, fontSize: e.target.value })}
+          />
+        </label>
+        <label className="block space-y-1">
+          <div className={subMuted}>Weight</div>
+          <select
+            className={inputClass}
+            value={T.fontWeight}
+            onChange={(e) => onChange({ ...T, fontWeight: e.target.value })}
+          >
+            {TYPOGRAPHY_WEIGHT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <label className="block space-y-1">
+        <div className={subMuted}>Color</div>
+        <div className="flex items-center gap-2">
+          <input
+            aria-label="Text color"
+            className="h-9 w-14 cursor-pointer rounded border border-[color:var(--color-border)] bg-white"
+            type="color"
+            value={T.color}
+            onChange={(e) => onChange({ ...T, color: e.target.value })}
+          />
+          <input
+            className={inputClass}
+            placeholder="#111827"
+            spellCheck={false}
+            type="text"
+            value={T.color}
+            onChange={(e) => onChange({ ...T, color: e.target.value })}
+          />
+        </div>
+      </label>
+
+      <label className="block space-y-1">
+        <div className={subMuted}>Line height</div>
+        <input
+          className={inputClass}
+          placeholder="1.5 or 24px"
+          type="text"
+          value={T.lineHeight}
+          onChange={(e) => onChange({ ...T, lineHeight: e.target.value })}
+        />
+      </label>
+
+      <div className="space-y-1">
+        <div className={subMuted}>Alignment</div>
+        <div className="flex flex-wrap gap-1">
+          {(
+            [
+              ['left', 'Left'],
+              ['center', 'Center'],
+              ['right', 'Right'],
+              ['justify', 'Justify'],
+            ] as const
+          ).map(([val, lbl]) => (
+            <button
+              key={val}
+              className={[
+                'rounded-md border px-2 py-1 text-xs',
+                T.textAlign === val
+                  ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10'
+                  : 'border-[color:var(--color-border)] hover:bg-black/5',
+              ].join(' ')}
+              type="button"
+              onClick={() => setAlign(val)}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        className="w-full rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs hover:bg-black/5"
+        type="button"
+        onClick={() => onChange({ ...DEFAULT_TYPOGRAPHY })}
+      >
+        Reset typography
+      </button>
+    </div>
+  )
+}
+
 export function Inspector() {
   const selectedId = useAppStore((s) => s.selectedIds[0] ?? null)
   const node = useAppStore((s) => (selectedId ? s.components[selectedId] : null))
@@ -444,6 +581,7 @@ export function Inspector() {
 
   const def = getDefinition(node.type)
   const inspector = def?.inspector ?? {}
+  const showTypography = Boolean(def?.supportsTypography)
 
   return (
     <div className="space-y-3">
@@ -464,6 +602,13 @@ export function Inspector() {
         layout={node.props.layout}
         onChange={(next) => setProp(node.id, 'layout', next)}
       />
+
+      {showTypography ? (
+        <TypographyInspectorSection
+          typography={node.props.typography}
+          onChange={(next) => setProp(node.id, 'typography', next)}
+        />
+      ) : null}
 
       <div className="space-y-3">
         {Object.entries(inspector).map(([key, field]) => (

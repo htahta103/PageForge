@@ -72,7 +72,7 @@ export function EditorPage() {
         <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-4">
           <div className="text-sm font-medium">Quick adds</div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {['InputText', 'InputEmail', 'Textarea', 'Card', 'NavBar'].map((t) => (
+            {['Text', 'Button', 'InputText', 'InputEmail', 'Textarea', 'Card', 'NavBar'].map((t) => (
               <button
                 key={t}
                 className="rounded-md border border-[color:var(--color-border)] px-3 py-1.5 text-sm hover:bg-black/5"

@@ -47,7 +47,13 @@ export function Palette() {
             <button
               className="w-full rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs text-[color:var(--color-muted)] hover:bg-black/5"
               type="button"
-              onClick={() => addComponent(d.type)}
+              onClick={() => {
+                const id = addComponent(d.type)
+                const defaults = d.defaults ?? {}
+                for (const [k, v] of Object.entries(defaults)) {
+                  useAppStore.getState().setProp(id, k, v)
+                }
+              }}
             >
               Add
             </button>

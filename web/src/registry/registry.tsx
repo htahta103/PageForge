@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ComponentNode, ComponentType } from '../types/components'
+import { DEFAULT_TYPOGRAPHY, normalizeTypography, typographyToStyle } from '../utils/typography'
 
 export type PropField =
   | { kind: 'text'; label: string; placeholder?: string }
@@ -14,8 +15,14 @@ export interface ComponentDefinition {
   title: string
   icon?: string
   defaults?: Record<string, unknown>
+  /** When true, inspector shows the typography section (font, size, weight, color, line-height, alignment). */
+  supportsTypography?: boolean
   render: (node: ComponentNode, children: ReactNode[]) => ReactNode
   inspector?: Record<string, PropField>
+}
+
+function typoStyle(node: ComponentNode) {
+  return typographyToStyle(normalizeTypography(node.props.typography))
 }
 
 export const registry: Record<ComponentType, ComponentDefinition> = {
@@ -35,10 +42,76 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
     ),
   },
 
+  Button: {
+    type: 'Button',
+    title: 'Button',
+    supportsTypography: true,
+    defaults: {
+      label: 'Button',
+      variant: 'primary',
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
+    inspector: {
+      label: { kind: 'text', label: 'Label' },
+      variant: {
+        kind: 'select',
+        label: 'Variant',
+        options: [
+          { label: 'Primary', value: 'primary' },
+          { label: 'Secondary', value: 'secondary' },
+          { label: 'Ghost', value: 'ghost' },
+        ],
+      },
+    },
+    render: (node) => {
+      const label = (node.props.label as string) ?? 'Button'
+      const variant = String(node.props.variant ?? 'primary')
+      const typo = typoStyle(node)
+      const base =
+        'inline-flex max-w-full items-center justify-center rounded-md px-4 py-2 ring-offset-2 transition-colors'
+      const skin =
+        variant === 'secondary'
+          ? 'border border-[color:var(--color-border)] bg-[color:var(--color-card)]'
+          : variant === 'ghost'
+            ? 'border border-transparent bg-transparent'
+            : 'border border-transparent bg-[color:var(--color-primary)] text-white'
+      return (
+        <button className={`${base} ${skin}`} style={typo} type="button">
+          {label}
+        </button>
+      )
+    },
+  },
+
+  Text: {
+    type: 'Text',
+    title: 'Text',
+    supportsTypography: true,
+    defaults: { content: 'Edit me in the inspector.', typography: { ...DEFAULT_TYPOGRAPHY } },
+    inspector: {
+      content: { kind: 'textarea', label: 'Content' },
+    },
+    render: (node) => {
+      const content = (node.props.content as string) ?? ''
+      return (
+        <p className="m-0 whitespace-pre-wrap" style={typoStyle(node)}>
+          {content}
+        </p>
+      )
+    },
+  },
+
   InputText: {
     type: 'InputText',
     title: 'Text input',
-    defaults: { label: 'Label', placeholder: 'Type…', required: false, name: '' },
+    supportsTypography: true,
+    defaults: {
+      label: 'Label',
+      placeholder: 'Type…',
+      required: false,
+      name: '',
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       label: { kind: 'text', label: 'Label' },
       name: { kind: 'text', label: 'Name', placeholder: 'field_name' },
@@ -51,10 +124,10 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
       const placeholder = (node.props.placeholder as string) ?? ''
       const required = Boolean(node.props.required)
       return (
-        <label className="block space-y-1">
-          {label ? <div className="text-sm font-medium">{label}</div> : null}
+        <label className="block space-y-1" style={typoStyle(node)}>
+          {label ? <div className="font-medium">{label}</div> : null}
           <input
-            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm"
+            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2"
             name={name || undefined}
             placeholder={placeholder || undefined}
             required={required}
@@ -68,7 +141,14 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   InputEmail: {
     type: 'InputEmail',
     title: 'Email input',
-    defaults: { label: 'Email', placeholder: 'name@example.com', required: false, name: '' },
+    supportsTypography: true,
+    defaults: {
+      label: 'Email',
+      placeholder: 'name@example.com',
+      required: false,
+      name: '',
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       label: { kind: 'text', label: 'Label' },
       name: { kind: 'text', label: 'Name', placeholder: 'email' },
@@ -81,10 +161,10 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
       const placeholder = (node.props.placeholder as string) ?? ''
       const required = Boolean(node.props.required)
       return (
-        <label className="block space-y-1">
-          {label ? <div className="text-sm font-medium">{label}</div> : null}
+        <label className="block space-y-1" style={typoStyle(node)}>
+          {label ? <div className="font-medium">{label}</div> : null}
           <input
-            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm"
+            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2"
             name={name || undefined}
             placeholder={placeholder || undefined}
             required={required}
@@ -98,7 +178,16 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   InputNumber: {
     type: 'InputNumber',
     title: 'Number input',
-    defaults: { label: 'Number', placeholder: '', required: false, name: '', min: 0, max: 100 },
+    supportsTypography: true,
+    defaults: {
+      label: 'Number',
+      placeholder: '',
+      required: false,
+      name: '',
+      min: 0,
+      max: 100,
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       label: { kind: 'text', label: 'Label' },
       name: { kind: 'text', label: 'Name', placeholder: 'amount' },
@@ -115,10 +204,10 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
       const min = node.props.min as number | undefined
       const max = node.props.max as number | undefined
       return (
-        <label className="block space-y-1">
-          {label ? <div className="text-sm font-medium">{label}</div> : null}
+        <label className="block space-y-1" style={typoStyle(node)}>
+          {label ? <div className="font-medium">{label}</div> : null}
           <input
-            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm"
+            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2"
             max={typeof max === 'number' ? max : undefined}
             min={typeof min === 'number' ? min : undefined}
             name={name || undefined}
@@ -134,7 +223,15 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   Textarea: {
     type: 'Textarea',
     title: 'Textarea',
-    defaults: { label: 'Message', placeholder: 'Write…', required: false, name: '', rows: 4 },
+    supportsTypography: true,
+    defaults: {
+      label: 'Message',
+      placeholder: 'Write…',
+      required: false,
+      name: '',
+      rows: 4,
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       label: { kind: 'text', label: 'Label' },
       name: { kind: 'text', label: 'Name', placeholder: 'message' },
@@ -149,10 +246,10 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
       const required = Boolean(node.props.required)
       const rows = typeof node.props.rows === 'number' ? (node.props.rows as number) : 4
       return (
-        <label className="block space-y-1">
-          {label ? <div className="text-sm font-medium">{label}</div> : null}
+        <label className="block space-y-1" style={typoStyle(node)}>
+          {label ? <div className="font-medium">{label}</div> : null}
           <textarea
-            className="w-full resize-y rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm"
+            className="w-full resize-y rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2"
             name={name || undefined}
             placeholder={placeholder || undefined}
             required={required}
@@ -166,11 +263,13 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   Select: {
     type: 'Select',
     title: 'Select',
+    supportsTypography: true,
     defaults: {
       label: 'Select',
       name: '',
       required: false,
       options: ['Option A', 'Option B', 'Option C'],
+      typography: { ...DEFAULT_TYPOGRAPHY },
     },
     inspector: {
       label: { kind: 'text', label: 'Label' },
@@ -187,10 +286,10 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
         Array.isArray(optionsRaw) ? optionsRaw.map(String) : String(optionsRaw ?? '').split('\n')
       const normalized = options.map((o) => o.trim()).filter(Boolean)
       return (
-        <label className="block space-y-1">
-          {label ? <div className="text-sm font-medium">{label}</div> : null}
+        <label className="block space-y-1" style={typoStyle(node)}>
+          {label ? <div className="font-medium">{label}</div> : null}
           <select
-            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm"
+            className="w-full rounded-md border border-[color:var(--color-border)] bg-white px-3 py-2"
             name={name || undefined}
             required={required}
           >
@@ -208,7 +307,14 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   Checkbox: {
     type: 'Checkbox',
     title: 'Checkbox',
-    defaults: { label: 'Accept terms', name: '', required: false, checked: false },
+    supportsTypography: true,
+    defaults: {
+      label: 'Accept terms',
+      name: '',
+      required: false,
+      checked: false,
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       label: { kind: 'text', label: 'Label' },
       name: { kind: 'text', label: 'Name', placeholder: 'accept_terms' },
@@ -221,10 +327,10 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
       const required = Boolean(node.props.required)
       const checked = Boolean(node.props.checked)
       return (
-        <label className="flex items-center gap-2">
+        <label className="flex items-center gap-2" style={typoStyle(node)}>
           <input
             checked={checked}
-            className="h-4 w-4 rounded border-[color:var(--color-border)]"
+            className="h-4 w-4 shrink-0 rounded border-[color:var(--color-border)]"
             name={name || undefined}
             required={required}
             type="checkbox"
@@ -232,7 +338,7 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
               // editor-only: real form state will be added later
             }}
           />
-          <span className="text-sm">{label}</span>
+          <span>{label}</span>
         </label>
       )
     },
@@ -241,7 +347,14 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   RadioGroup: {
     type: 'RadioGroup',
     title: 'Radio group',
-    defaults: { label: 'Radio', name: 'radio', required: false, options: ['One', 'Two'] },
+    supportsTypography: true,
+    defaults: {
+      label: 'Radio',
+      name: 'radio',
+      required: false,
+      options: ['One', 'Two'],
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       label: { kind: 'text', label: 'Label' },
       name: { kind: 'text', label: 'Name', placeholder: 'radio' },
@@ -257,13 +370,19 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
         Array.isArray(optionsRaw) ? optionsRaw.map(String) : String(optionsRaw ?? '').split('\n')
       const normalized = options.map((o) => o.trim()).filter(Boolean)
       return (
-        <fieldset className="space-y-2">
-          {label ? <legend className="text-sm font-medium">{label}</legend> : null}
+        <fieldset className="space-y-2" style={typoStyle(node)}>
+          {label ? <legend className="font-medium">{label}</legend> : null}
           <div className="space-y-1">
             {normalized.map((opt) => (
               <label key={opt} className="flex items-center gap-2">
-                <input name={name || undefined} required={required} type="radio" value={opt} />
-                <span className="text-sm">{opt}</span>
+                <input
+                  className="h-4 w-4 shrink-0"
+                  name={name || undefined}
+                  required={required}
+                  type="radio"
+                  value={opt}
+                />
+                <span>{opt}</span>
               </label>
             ))}
           </div>
@@ -275,7 +394,14 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   Card: {
     type: 'Card',
     title: 'Card',
-    defaults: { title: 'Card title', body: 'Card body', footer: 'Footer', showFooter: true },
+    supportsTypography: true,
+    defaults: {
+      title: 'Card title',
+      body: 'Card body',
+      footer: 'Footer',
+      showFooter: true,
+      typography: { ...DEFAULT_TYPOGRAPHY },
+    },
     inspector: {
       title: { kind: 'text', label: 'Header' },
       body: { kind: 'textarea', label: 'Body' },
@@ -288,17 +414,18 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
       const footer = (node.props.footer as string) ?? ''
       const showFooter = Boolean(node.props.showFooter)
       return (
-        <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)]">
+        <div
+          className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)]"
+          style={typoStyle(node)}
+        >
           {title ? (
             <div className="border-b border-[color:var(--color-border)] px-4 py-3">
-              <div className="text-sm font-semibold">{title}</div>
+              <div className="font-semibold">{title}</div>
             </div>
           ) : null}
-          <div className="whitespace-pre-wrap px-4 py-3 text-sm text-[color:var(--color-muted)]">
-            {body}
-          </div>
+          <div className="whitespace-pre-wrap px-4 py-3 opacity-90">{body}</div>
           {showFooter ? (
-            <div className="border-t border-[color:var(--color-border)] px-4 py-3 text-xs text-[color:var(--color-muted)]">
+            <div className="border-t border-[color:var(--color-border)] px-4 py-3 text-[0.9em] opacity-80">
               {footer}
             </div>
           ) : null}
@@ -310,12 +437,14 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
   NavBar: {
     type: 'NavBar',
     title: 'Navigation bar',
+    supportsTypography: true,
     defaults: {
       brand: 'Brand',
       links: [
         { label: 'Home', href: '/' },
         { label: 'About', href: '/about' },
       ],
+      typography: { ...DEFAULT_TYPOGRAPHY },
     },
     inspector: {
       brand: { kind: 'text', label: 'Brand' },
@@ -328,13 +457,16 @@ export const registry: Record<ComponentType, ComponentDefinition> = {
         ? (linksRaw as { label: string; href: string }[])
         : []
       return (
-        <div className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-4 py-3">
-          <div className="text-sm font-semibold">{brand}</div>
+        <div
+          className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-4 py-3"
+          style={typoStyle(node)}
+        >
+          <div className="font-semibold">{brand}</div>
           <nav className="flex items-center gap-3">
             {links.map((l, idx) => (
               <a
                 key={`${l.href}-${idx}`}
-                className="text-sm text-[color:var(--color-muted)] hover:text-[color:var(--color-fg)]"
+                className="opacity-80 underline-offset-4 hover:opacity-100 hover:underline"
                 href={l.href}
               >
                 {l.label}
