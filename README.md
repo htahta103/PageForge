@@ -36,6 +36,8 @@ make dev-frontend        # Start Vite dev server (port 5173)
 │   └── migrations/          # SQL migrations (golang-migrate)
 ├── frontend/
 │   └── src/                 # React + TypeScript application
+├── attic/
+│   └── web/                 # Deprecated/quarantined template (not used)
 ├── nginx/                   # Reverse proxy config
 ├── docker-compose.yml       # Local development orchestration
 ├── Makefile                 # Build/test/deploy targets
