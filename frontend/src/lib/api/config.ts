@@ -11,3 +11,9 @@ export function getApiBaseUrl(): string {
   }
   return '/api/v1'
 }
+
+export function getApiBearerToken(): string | null {
+  const env = import.meta.env.VITE_API_BEARER_TOKEN
+  if (typeof env === 'string' && env.trim().length > 0) return env.trim()
+  return null
+}

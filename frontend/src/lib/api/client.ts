@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from './config'
+import { getApiBaseUrl, getApiBearerToken } from './config'
 import { ApiError, getApiErrorMessage } from './errors'
 
 function joinUrl(path: string): string {
@@ -22,10 +22,12 @@ export async function apiFetch<T>(
   init: RequestInit & { json?: unknown } = {},
 ): Promise<T> {
   const { json, headers, ...rest } = init
+  const bearer = getApiBearerToken()
   const res = await fetch(joinUrl(path), {
     ...rest,
     headers: {
       ...(json !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       ...(headers ?? {}),
     },
     body: json !== undefined ? JSON.stringify(json) : rest.body,
