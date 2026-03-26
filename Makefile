@@ -1,5 +1,8 @@
 .PHONY: build test lint dev deploy-staging deploy-prod
 
+# Cloudflare Pages project for production builds (override on CLI: make deploy-prod PAGES_PROJECT_PROD=...)
+PAGES_PROJECT_PROD ?= pageforge
+
 # ---- Development ----
 
 dev: ## Start all services for local development
@@ -22,7 +25,7 @@ build-backend: ## Build Go backend binary
 	cd backend && go build -o bin/pageforge ./cmd/pageforge
 
 build-frontend: ## Build frontend for production
-	cd frontend && npm ci && npm run build
+	cd frontend && (test -f package-lock.json && npm ci || npm install) && npm run build
 
 # ---- Test ----
 
@@ -51,13 +54,13 @@ typecheck: ## Run TypeScript type checking
 
 # ---- Deploy ----
 
-deploy-staging: build ## Deploy to staging
-	@echo "TODO: Configure staging deployment"
-	@echo "docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d"
+deploy-staging: build-frontend ## Deploy frontend to Cloudflare Pages (staging)
+	@echo "Requires wrangler auth. Set CLOUDFLARE_ACCOUNT_ID if needed. Directory: frontend/dist."
+	wrangler pages deploy frontend/dist --project-name pageforge-staging
 
-deploy-prod: build ## Deploy to production
-	@echo "TODO: Configure production deployment"
-	@echo "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+deploy-prod: build-frontend ## Deploy frontend to Cloudflare Pages (production)
+	@echo "Override with: make deploy-prod PAGES_PROJECT_PROD=<cf-pages-project>"
+	wrangler pages deploy frontend/dist --project-name $(PAGES_PROJECT_PROD)
 
 # ---- Database ----
 
