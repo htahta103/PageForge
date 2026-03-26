@@ -16,7 +16,7 @@ real time, and exporting clean HTML+CSS or React+Tailwind code.
 | Drag & drop | @dnd-kit | Tree-aware DnD with custom collision detection; supports both canvas drops and layer reordering |
 | Backend | Go (Chi router) | Fast JSON marshalling for large component trees; simple deployment binary |
 | Database | PostgreSQL 16 | JSONB for component trees; relational integrity for project/page hierarchy |
-| Deployment | Docker Compose | Single-command local dev and staging; nginx reverse proxy for production |
+| Deployment | Local: Docker Compose; Cloud: Fly.io + Cloudflare Pages | Local is single-command dev; cloud uses Fly.io for the Go API + Postgres and Pages for the SPA |
 
 ## Architecture Diagram
 
@@ -241,6 +241,8 @@ migrations/                    SQL migration files (golang-migrate)
 
 ## Deployment Topology
 
+### Local Development (Docker Compose)
+
 ```
 docker-compose.yml
 ├── nginx          (reverse proxy, serves SPA static files)
@@ -252,6 +254,14 @@ docker-compose.yml
 │   └── :5432 (internal, volume-mounted)
 └── migrate        (one-shot: runs golang-migrate on startup)
 ```
+
+### Cloud Deployment (Fly.io + Cloudflare Pages)
+
+- **Backend**: Fly.io runs the Go API and connects to Postgres.
+  - API host: `https://pageforge-api.fly.dev`
+  - API routes: `/api/v1/*`
+- **Frontend**: Cloudflare Pages hosts the built SPA from `frontend/dist`.
+  - Configure the frontend API base to `https://pageforge-api.fly.dev/api/v1` (via `VITE_API_URL`)
 
 ### Environment Configuration
 

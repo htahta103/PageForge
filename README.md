@@ -6,7 +6,9 @@ Visual page builder — drag and drop components onto a WYSIWYG canvas, edit pro
 
 - **Frontend**: React 18 + TypeScript + Tailwind CSS + Zustand + @dnd-kit
 - **Backend**: Go (Chi router) + PostgreSQL 16
-- **Infrastructure**: Docker Compose + nginx reverse proxy
+- **Infrastructure**:
+  - **Local dev**: Docker Compose + nginx reverse proxy
+  - **Cloud deploy**: Cloudflare Pages (frontend) + Fly.io (Go backend + Postgres)
 
 ## Quick Start
 
@@ -59,8 +61,6 @@ make build           # Build backend + frontend
 make test            # Run all tests
 make lint            # Run all linters
 make typecheck       # TypeScript type checking
-make deploy-staging  # Deploy to staging
-make deploy-prod     # Deploy to production
 ```
 
 ## Environment Variables
@@ -74,6 +74,13 @@ make deploy-prod     # Deploy to production
 | `VITE_API_URL` | `http://localhost:8080/api/v1` | Frontend API base URL |
 
 Copy `.env.example` to `.env` to override defaults.
+
+## Deployment (Cloud)
+
+- **Frontend**: Cloudflare Pages (build `frontend/`, deploy `frontend/dist`)
+  - Set `VITE_API_URL` to `https://pageforge-api.fly.dev/api/v1`
+- **Backend**: Fly.io (Go API + Postgres)
+  - API host: `https://pageforge-api.fly.dev`
 
 ## API
 
