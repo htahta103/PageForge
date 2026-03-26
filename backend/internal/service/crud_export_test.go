@@ -35,8 +35,9 @@ type fakeRepository struct {
 	lastCreatePageSlug     string
 	lastUpdatePageName     *string
 	lastUpdatePageSlug     *string
-	lastUpdatePageOrder    *int
-	lastDuplicateNewName   string
+	lastUpdatePageOrder     *int
+	lastDuplicateNewName    string
+	lastDuplicateNewSlug    string
 
 	pageToReturn *model.Page
 }
@@ -138,13 +139,14 @@ func (f *fakeRepository) DeletePage(ctx context.Context, projectID, pageID uuid.
 	return nil
 }
 
-func (f *fakeRepository) DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID, newName string) (*model.Page, error) {
+func (f *fakeRepository) DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID, newName, newSlug string) (*model.Page, error) {
 	f.lastDuplicateNewName = newName
+	f.lastDuplicateNewSlug = newSlug
 	return &model.Page{
 		ID:         uuid.New(),
 		ProjectID:  projectID,
 		Name:       newName,
-		Slug:       "copy",
+		Slug:       newSlug,
 		Components: json.RawMessage(`[]`),
 		Order:      0,
 		CreatedAt:  time.Now(),
@@ -221,6 +223,9 @@ func TestDuplicatePage_UsesDefaultCopyName(t *testing.T) {
 	}
 	if repo.lastDuplicateNewName != "Copy of Original" {
 		t.Fatalf("expected %q, got %q", "Copy of Original", repo.lastDuplicateNewName)
+	}
+	if !strings.HasPrefix(repo.lastDuplicateNewSlug, "copy-of-original-") || len(repo.lastDuplicateNewSlug) < len("copy-of-original-")+8 {
+		t.Fatalf("expected slugified unique slug, got %q", repo.lastDuplicateNewSlug)
 	}
 }
 

@@ -60,7 +60,12 @@ func (s *Service) DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID
 	if name != nil && *name != "" {
 		newName = *name
 	}
-	return s.repo.DuplicatePage(ctx, projectID, pageID, newName)
+	base := slugify(newName)
+	if base == "" {
+		base = "page"
+	}
+	newSlug := fmt.Sprintf("%s-%s", base, strings.ReplaceAll(uuid.New().String(), "-", "")[:12])
+	return s.repo.DuplicatePage(ctx, projectID, pageID, newName, newSlug)
 }
 
 func slugify(s string) string {

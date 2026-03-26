@@ -12,6 +12,8 @@ export const router = createBrowserRouter([
     children: [
       { path: paths.home, element: <HomePage /> },
       { path: paths.editor, element: <EditorPage /> },
+      { path: '/projects/:projectId/editor/:pageId', element: <EditorPage /> },
+      { path: '/projects/:projectId/editor', element: <EditorPage /> },
       { path: paths.settings, element: <SettingsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],

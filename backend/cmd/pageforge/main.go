@@ -60,7 +60,7 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{getEnv("CORS_ORIGIN", "http://localhost:5173")},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Content-Type", "X-Request-ID"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
 		ExposedHeaders:   []string{"X-Request-ID"},
 		AllowCredentials: false,
 		MaxAge:           300,

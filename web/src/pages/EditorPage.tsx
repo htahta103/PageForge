@@ -1,9 +1,11 @@
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
-import { useEffect } from 'react'
-import { canvasRedo, canvasUndo, useAppStore } from '../store/useAppStore'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { canvasRedo, canvasUndo, loadCanvasState, useAppStore } from '../store/useAppStore'
 import { getDefinition } from '../registry/registry'
 import { BreakpointToolbar } from '../editor/BreakpointToolbar'
 import { LayerTree } from '../editor/LayerTree'
+import { PageSidebar } from '../editor/PageSidebar'
 import { Palette } from '../editor/Palette'
 import { Canvas } from '../editor/Canvas'
 import { CanvasViewportProvider } from '../editor/CanvasViewportContext'
@@ -11,6 +13,15 @@ import { CanvasZoomToolbar } from '../editor/CanvasZoomToolbar'
 import { Inspector } from '../editor/Inspector'
 import { UndoRedoToolbar } from '../editor/UndoRedoToolbar'
 import { buildExportedHtml, downloadTextFile } from '../utils/exportHtmlCss'
+import { deserializeToComponentRecord } from '../utils/componentTreePersistence'
+import {
+  createPage,
+  getPage,
+  listPages,
+  persistCanvasToPage,
+  type PageSummary,
+} from '../lib/api/projectsPages'
+import { paths } from '../routes/paths'
 
 type PaletteDragData = { kind: 'palette'; componentType: string }
 
@@ -27,16 +38,138 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function EditorPage() {
+  const { projectId, pageId } = useParams<{ projectId?: string; pageId?: string }>()
+  const navigate = useNavigate()
+  const projectMode = Boolean(projectId)
+
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
   const addComponent = useAppStore((s) => s.addComponent)
   const deleteComponents = useAppStore((s) => s.deleteComponents)
   const components = useAppStore((s) => s.components)
   const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
 
-  ensureInitialized()
+  const [pages, setPages] = useState<PageSummary[]>([])
+  const [projectLoading, setProjectLoading] = useState(projectMode)
+  const [projectError, setProjectError] = useState<string | null>(null)
+  const hydratingRef = useRef(false)
+  const projectIdRef = useRef<string | undefined>(projectId)
+  const pageIdRef = useRef<string | undefined>(pageId)
+
+  projectIdRef.current = projectId
+  pageIdRef.current = pageId
+
+  if (!projectMode) {
+    ensureInitialized()
+  }
 
   const hasRoot = Boolean(components.root)
   const paletteCount = Object.keys(components).length - (hasRoot ? 1 : 0)
+
+  const refreshPages = useCallback(async () => {
+    if (!projectId) return
+    const res = await listPages(projectId)
+    setPages(res.data)
+  }, [projectId])
+
+  const flushSave = useCallback(async () => {
+    const pid = projectIdRef.current
+    const pg = pageIdRef.current
+    if (!pid || !pg) return
+    await persistCanvasToPage(pid, pg, useAppStore.getState().components)
+  }, [])
+
+  // Bootstrap project routes: ensure default page and sync URL
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    ;(async () => {
+      setProjectError(null)
+      setProjectLoading(true)
+      try {
+        const list = (await listPages(projectId)).data
+        if (cancelled) return
+        if (list.length === 0) {
+          const home = await createPage(projectId, { name: 'Home' })
+          if (cancelled) return
+          navigate(paths.projectEditor(projectId, home.id), { replace: true })
+          return
+        }
+        if (!pageId) {
+          navigate(paths.projectEditor(projectId, list[0].id), { replace: true })
+          return
+        }
+        const exists = list.some((p) => p.id === pageId)
+        if (!exists) {
+          navigate(paths.projectEditor(projectId, list[0].id), { replace: true })
+          return
+        }
+        setPages(list)
+      } catch (e) {
+        if (!cancelled) {
+          setProjectError(e instanceof Error ? e.message : 'Failed to load project')
+        }
+      } finally {
+        if (!cancelled) setProjectLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, pageId, navigate])
+
+  // Load canvas when page changes
+  useEffect(() => {
+    if (!projectId || !pageId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const detail = await getPage(projectId, pageId)
+        if (cancelled) return
+        hydratingRef.current = true
+        loadCanvasState(deserializeToComponentRecord(detail.components))
+        queueMicrotask(() => {
+          hydratingRef.current = false
+        })
+      } catch (e) {
+        if (!cancelled) {
+          setProjectError(e instanceof Error ? e.message : 'Failed to load page')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, pageId])
+
+  // Autosave (project mode)
+  useEffect(() => {
+    if (!projectId || !pageId) return
+    let timer: ReturnType<typeof setTimeout>
+    const unsub = useAppStore.subscribe((state, prev) => {
+      if (state.components === prev.components) return
+      if (hydratingRef.current) return
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        void persistCanvasToPage(projectId, pageId, useAppStore.getState().components).catch(
+          (err) => console.error('autosave failed', err),
+        )
+      }, 750)
+    })
+    return () => {
+      unsub()
+      clearTimeout(timer)
+    }
+  }, [projectId, pageId])
+
+  // Flush on unmount (project mode)
+  useEffect(() => {
+    return () => {
+      const pid = projectIdRef.current
+      const pg = pageIdRef.current
+      if (!pid || !pg) return
+      void persistCanvasToPage(pid, pg, useAppStore.getState().components).catch(() => {})
+    }
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -84,6 +217,22 @@ export function EditorPage() {
     addComponent(type, 'root', defaults)
   }
 
+  if (projectMode && projectLoading) {
+    return (
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-8 text-sm text-[color:var(--color-muted)]">
+        Loading project…
+      </div>
+    )
+  }
+
+  if (projectMode && projectError) {
+    return (
+      <div className="rounded-[var(--radius-md)] border border-red-200 bg-red-50 p-6 text-sm text-red-800">
+        {projectError}
+      </div>
+    )
+  }
+
   return (
     <DndContext onDragEnd={onDragEnd}>
       <div className="space-y-4">
@@ -91,7 +240,9 @@ export function EditorPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Editor</h1>
             <p className="text-sm text-[color:var(--color-muted)]">
-              Minimal WYSIWYG scaffold: palette → canvas → inspector.
+              {projectMode
+                ? 'Multi-page project: sidebar lists pages; canvas autosaves to the API.'
+                : 'Local sandbox (no API). Open a project from Home to persist pages.'}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -114,6 +265,16 @@ export function EditorPage() {
 
         <div className="grid grid-cols-12 gap-4">
           <aside className="col-span-12 space-y-4 md:col-span-3">
+            {projectMode && projectId && pageId ? (
+              <PageSidebar
+                projectId={projectId}
+                pages={pages}
+                activePageId={pageId}
+                disabled={projectLoading}
+                onBeforeNavigate={flushSave}
+                onPagesChanged={refreshPages}
+              />
+            ) : null}
             <Palette />
             <LayerTree />
           </aside>
@@ -156,4 +317,3 @@ export function EditorPage() {
     </DndContext>
   )
 }
-

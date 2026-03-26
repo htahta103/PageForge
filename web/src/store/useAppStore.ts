@@ -88,7 +88,7 @@ const initialState: AppState = {
   clipboard: null,
 }
 
-export const useAppStore = create<AppState & AppActions>()(
+const useAppStoreBase = create<AppState & AppActions>()(
   temporal(
     (set, get) => ({
       ...initialState,
@@ -271,6 +271,18 @@ export const useAppStore = create<AppState & AppActions>()(
     },
   ),
 )
+
+/** Replace tree from API/load; clears undo/redo and selection. */
+export const useAppStore = useAppStoreBase
+
+export function loadCanvasState(components: Record<ComponentId, ComponentNode>) {
+  useAppStore.setState({
+    components,
+    selectedIds: [],
+    activeBreakpoint: 'desktop',
+  })
+  useAppStore.temporal.getState().clear()
+}
 
 function sanitizeSelection() {
   const s = useAppStore.getState()

@@ -23,7 +23,7 @@ type Repository interface {
 	CreatePage(ctx context.Context, projectID uuid.UUID, name, slug string) (*model.Page, error)
 	UpdatePage(ctx context.Context, projectID, pageID uuid.UUID, name, slug *string, components *json.RawMessage, order *int, baseUpdatedAt *time.Time) (*model.Page, error)
 	DeletePage(ctx context.Context, projectID, pageID uuid.UUID) error
-	DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID, newName string) (*model.Page, error)
+	DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID, newName, newSlug string) (*model.Page, error)
 }
 
 type Service struct {

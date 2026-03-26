@@ -102,16 +102,16 @@ func (r *Repository) DeletePage(ctx context.Context, projectID, pageID uuid.UUID
 	return nil
 }
 
-func (r *Repository) DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID, newName string) (*model.Page, error) {
+func (r *Repository) DuplicatePage(ctx context.Context, projectID, pageID uuid.UUID, newName, newSlug string) (*model.Page, error) {
 	var p model.Page
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO pages (project_id, name, slug, components, sort_order)
-		SELECT project_id, $3, $3 || '-' || substr(gen_random_uuid()::text, 1, 8), components,
+		SELECT project_id, $3, $4, components,
 		       COALESCE((SELECT MAX(sort_order) + 1 FROM pages WHERE project_id = $1), 0)
 		FROM pages
 		WHERE id = $2 AND project_id = $1
 		RETURNING id, project_id, name, slug, components, sort_order, created_at, updated_at
-	`, projectID, pageID, newName).Scan(&p.ID, &p.ProjectID, &p.Name, &p.Slug, &p.Components, &p.Order, &p.CreatedAt, &p.UpdatedAt)
+	`, projectID, pageID, newName, newSlug).Scan(&p.ID, &p.ProjectID, &p.Name, &p.Slug, &p.Components, &p.Order, &p.CreatedAt, &p.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return nil, &model.NotFoundError{Resource: "Page", ID: pageID.String()}
 	}
