@@ -82,6 +82,28 @@ export default {
         return json(req, { data, total: data.length })
       }
 
+      const projectGetMatch = url.pathname.match(/^\/api\/v1\/projects\/([^/]+)$/)
+      if (projectGetMatch && req.method === 'GET') {
+        await env.DB.exec(
+          "CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, theme TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);",
+        )
+        const projectId = projectGetMatch[1]
+        const row = await env.DB.prepare(
+          'SELECT id, name, theme, created_at as createdAt, updated_at as updatedAt FROM projects WHERE id = ? LIMIT 1',
+        )
+          .bind(projectId)
+          .first()
+        if (!row) return json(req, { code: 'not_found', message: 'Project not found' }, { status: 404 })
+        const theme = (() => {
+          try {
+            return JSON.parse((row as any).theme ?? '{}')
+          } catch {
+            return {}
+          }
+        })()
+        return json(req, { ...(row as any), theme })
+      }
+
       if (url.pathname === '/api/v1/projects' && req.method === 'POST') {
         await env.DB.exec(
           "CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, theme TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);",
