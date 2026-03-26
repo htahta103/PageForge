@@ -1,6 +1,7 @@
 export type ComponentId = string
 
-export type BreakpointId = 'base' | 'sm' | 'md' | 'lg' | 'xl'
+/** Design-time preview widths: Desktop 1280, Tablet 768, Mobile 375 */
+export type BreakpointId = 'desktop' | 'tablet' | 'mobile'
 
 export type ComponentType = string
 

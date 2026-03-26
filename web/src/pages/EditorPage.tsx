@@ -1,6 +1,7 @@
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 import { useAppStore } from '../store/useAppStore'
 import { getDefinition } from '../registry/registry'
+import { BreakpointToolbar } from '../editor/BreakpointToolbar'
 import { Palette } from '../editor/Palette'
 import { Canvas } from '../editor/Canvas'
 import { Inspector } from '../editor/Inspector'
@@ -58,7 +59,8 @@ export function EditorPage() {
             <Palette />
           </aside>
 
-          <section className="col-span-12 md:col-span-6">
+          <section className="col-span-12 space-y-3 md:col-span-6">
+            <BreakpointToolbar />
             <Canvas />
           </section>
 

@@ -1,5 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import type { ComponentId } from '../types/components'
+import { BREAKPOINT_WIDTH_PX } from '../lib/breakpoints'
 import { getDefinition } from '../registry/registry'
 import { useAppStore } from '../store/useAppStore'
 import { layoutToStyle, normalizeLayout } from '../utils/componentLayout'
@@ -51,6 +52,8 @@ export function Canvas() {
   const ensureInitialized = useAppStore((s) => s.ensureInitialized)
   const addComponent = useAppStore((s) => s.addComponent)
   const selectOne = useAppStore((s) => s.selectOne)
+  const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
+  const canvasWidthPx = BREAKPOINT_WIDTH_PX[activeBreakpoint]
 
   const { setNodeRef, isOver } = useDroppable({
     id: 'canvas:root',
@@ -60,27 +63,36 @@ export function Canvas() {
 
   return (
     <div
-      ref={setNodeRef}
-      className={[
-        'rounded-[var(--radius-md)] p-2',
-        isOver ? 'bg-[color:var(--color-primary)]/10' : '',
-      ].join(' ')}
+      className="flex min-h-[min(640px,70vh)] justify-center rounded-[var(--radius-md)] bg-[color:var(--color-muted)]/10 p-4"
       onClick={() => selectOne(null)}
     >
-      <NodeView id="root" />
+      <div
+        ref={setNodeRef}
+        className={[
+          'w-full max-w-full rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-white p-2 shadow-sm transition-[width] duration-200',
+          isOver ? 'bg-[color:var(--color-primary)]/5 ring-2 ring-[color:var(--color-primary)]/40' : '',
+        ].join(' ')}
+        style={{ width: canvasWidthPx, maxWidth: '100%' }}
+        onClick={(e) => {
+          e.stopPropagation()
+          selectOne(null)
+        }}
+      >
+        <NodeView id="root" />
 
-      <div className="mt-3 text-xs text-[color:var(--color-muted)]">
-        Tip: Drag from palette onto the canvas, or click “Add”.
-        <button
-          className="ml-2 rounded-md border border-[color:var(--color-border)] px-2 py-1 hover:bg-black/5"
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            addComponent('Card')
-          }}
-        >
-          Quick add Card
-        </button>
+        <div className="mt-3 text-xs text-[color:var(--color-muted)]">
+          Tip: Drag from palette onto the canvas, or click “Add”.
+          <button
+            className="ml-2 rounded-md border border-[color:var(--color-border)] px-2 py-1 hover:bg-black/5"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              addComponent('Card')
+            }}
+          >
+            Quick add Card
+          </button>
+        </div>
       </div>
     </div>
   )

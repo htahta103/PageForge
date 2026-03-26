@@ -23,7 +23,7 @@ export interface AppActions {
 const initialState: AppState = {
   components: {},
   selectedIds: [],
-  activeBreakpoint: 'base',
+  activeBreakpoint: 'desktop',
   clipboard: null,
 }
 
