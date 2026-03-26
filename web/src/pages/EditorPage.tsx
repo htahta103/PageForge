@@ -6,6 +6,8 @@ import { BreakpointToolbar } from '../editor/BreakpointToolbar'
 import { LayerTree } from '../editor/LayerTree'
 import { Palette } from '../editor/Palette'
 import { Canvas } from '../editor/Canvas'
+import { CanvasViewportProvider } from '../editor/CanvasViewportContext'
+import { CanvasZoomToolbar } from '../editor/CanvasZoomToolbar'
 import { Inspector } from '../editor/Inspector'
 import { UndoRedoToolbar } from '../editor/UndoRedoToolbar'
 import { buildExportedHtml, downloadTextFile } from '../utils/exportHtmlCss'
@@ -117,8 +119,13 @@ export function EditorPage() {
           </aside>
 
           <section className="col-span-12 space-y-3 md:col-span-6">
-            <BreakpointToolbar />
-            <Canvas />
+            <CanvasViewportProvider>
+              <div className="flex flex-wrap items-center gap-2">
+                <BreakpointToolbar />
+                <CanvasZoomToolbar />
+              </div>
+              <Canvas />
+            </CanvasViewportProvider>
           </section>
 
           <aside className="col-span-12 space-y-3 md:col-span-3">
