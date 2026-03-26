@@ -43,10 +43,11 @@ func (r CreatePageRequest) Validate() error {
 }
 
 type UpdatePageRequest struct {
-	Name       *string          `json:"name,omitempty"`
-	Slug       *string          `json:"slug,omitempty"`
-	Components *json.RawMessage `json:"components,omitempty"`
-	Order      *int             `json:"order,omitempty"`
+	Name          *string          `json:"name,omitempty"`
+	Slug          *string          `json:"slug,omitempty"`
+	Components    *json.RawMessage `json:"components,omitempty"`
+	Order         *int             `json:"order,omitempty"`
+	BaseUpdatedAt *time.Time       `json:"baseUpdatedAt,omitempty"`
 }
 
 func (r UpdatePageRequest) Validate() error {

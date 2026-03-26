@@ -41,6 +41,11 @@ func handleError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "not_found", err.Error())
 		return
 	}
+	var conflictErr *model.ConflictError
+	if errors.As(err, &conflictErr) {
+		writeError(w, http.StatusConflict, "conflict", conflictErr.Message)
+		return
+	}
 	writeError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 }
 

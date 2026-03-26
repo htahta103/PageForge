@@ -59,7 +59,7 @@ func (f *fakeRepository) CreateProject(ctx context.Context, name string, theme j
 	return &model.Project{ID: uuid.New(), Name: name, Theme: t, CreatedAt: time.Now(), UpdatedAt: time.Now()}, nil
 }
 
-func (f *fakeRepository) UpdateProject(ctx context.Context, id uuid.UUID, name *string, theme *json.RawMessage) (*model.Project, error) {
+func (f *fakeRepository) UpdateProject(ctx context.Context, id uuid.UUID, name *string, theme *json.RawMessage, _ *time.Time) (*model.Project, error) {
 	f.lastUpdateProjectName = name
 	if theme == nil {
 		f.lastUpdateProjectTheme = nil
@@ -110,7 +110,7 @@ func (f *fakeRepository) CreatePage(ctx context.Context, projectID uuid.UUID, na
 	}, nil
 }
 
-func (f *fakeRepository) UpdatePage(ctx context.Context, projectID, pageID uuid.UUID, name, slug *string, components *json.RawMessage, order *int) (*model.Page, error) {
+func (f *fakeRepository) UpdatePage(ctx context.Context, projectID, pageID uuid.UUID, name, slug *string, components *json.RawMessage, order *int, _ *time.Time) (*model.Page, error) {
 	f.lastUpdatePageName = name
 	f.lastUpdatePageSlug = slug
 	f.lastUpdatePageOrder = order

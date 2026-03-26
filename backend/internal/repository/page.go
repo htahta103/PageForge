@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -57,12 +58,13 @@ func (r *Repository) CreatePage(ctx context.Context, projectID uuid.UUID, name, 
 		RETURNING id, project_id, name, slug, components, sort_order, created_at, updated_at
 	`, projectID, name, slug).Scan(&p.ID, &p.ProjectID, &p.Name, &p.Slug, &p.Components, &p.Order, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, mapDBError(err)
 	}
 	return &p, nil
 }
 
-func (r *Repository) UpdatePage(ctx context.Context, projectID, pageID uuid.UUID, name, slug *string, components *json.RawMessage, order *int) (*model.Page, error) {
+func (r *Repository) UpdatePage(ctx context.Context, projectID, pageID uuid.UUID, name, slug *string, components *json.RawMessage, order *int, baseUpdatedAt *time.Time) (*model.Page, error) {
+	base := normalizeConcurrencyTS(baseUpdatedAt)
 	var p model.Page
 	err := r.pool.QueryRow(ctx, `
 		UPDATE pages
@@ -71,13 +73,20 @@ func (r *Repository) UpdatePage(ctx context.Context, projectID, pageID uuid.UUID
 		    components = COALESCE($5, components),
 		    sort_order = COALESCE($6, sort_order)
 		WHERE id = $1 AND project_id = $2
+		  AND ($7::timestamptz IS NULL OR updated_at = $7::timestamptz)
 		RETURNING id, project_id, name, slug, components, sort_order, created_at, updated_at
-	`, pageID, projectID, name, slug, components, order).Scan(&p.ID, &p.ProjectID, &p.Name, &p.Slug, &p.Components, &p.Order, &p.CreatedAt, &p.UpdatedAt)
+	`, pageID, projectID, name, slug, components, order, base).Scan(&p.ID, &p.ProjectID, &p.Name, &p.Slug, &p.Components, &p.Order, &p.CreatedAt, &p.UpdatedAt)
 	if err == pgx.ErrNoRows {
+		if base != nil {
+			if _, err2 := r.GetPage(ctx, projectID, pageID); err2 != nil {
+				return nil, err2
+			}
+			return nil, &model.ConflictError{Message: "page was modified by another save; retry with current updatedAt from GET"}
+		}
 		return nil, &model.NotFoundError{Resource: "Page", ID: pageID.String()}
 	}
 	if err != nil {
-		return nil, err
+		return nil, mapDBError(err)
 	}
 	return &p, nil
 }
@@ -107,7 +116,7 @@ func (r *Repository) DuplicatePage(ctx context.Context, projectID, pageID uuid.U
 		return nil, &model.NotFoundError{Resource: "Page", ID: pageID.String()}
 	}
 	if err != nil {
-		return nil, err
+		return nil, mapDBError(err)
 	}
 	return &p, nil
 }

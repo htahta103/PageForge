@@ -44,7 +44,7 @@ func (s *Service) UpdatePage(ctx context.Context, projectID, pageID uuid.UUID, r
 	if req.Slug != nil && !slugRe.MatchString(*req.Slug) {
 		return nil, &model.ValidationError{Field: "slug", Message: "must match ^[a-z0-9-]+$"}
 	}
-	return s.repo.UpdatePage(ctx, projectID, pageID, req.Name, req.Slug, req.Components, req.Order)
+	return s.repo.UpdatePage(ctx, projectID, pageID, req.Name, req.Slug, req.Components, req.Order, req.BaseUpdatedAt)
 }
 
 func (s *Service) DeletePage(ctx context.Context, projectID, pageID uuid.UUID) error {

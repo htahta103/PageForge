@@ -62,8 +62,9 @@ func (r CreateProjectRequest) Validate() error {
 }
 
 type UpdateProjectRequest struct {
-	Name  *string `json:"name,omitempty"`
-	Theme *Theme  `json:"theme,omitempty"`
+	Name          *string    `json:"name,omitempty"`
+	Theme         *Theme     `json:"theme,omitempty"`
+	BaseUpdatedAt *time.Time `json:"baseUpdatedAt,omitempty"`
 }
 
 func (r UpdateProjectRequest) Validate() error {

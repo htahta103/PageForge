@@ -55,7 +55,7 @@ func (s *Service) UpdateProject(ctx context.Context, id uuid.UUID, req model.Upd
 		themeJSON = &rawMsg
 	}
 
-	return s.repo.UpdateProject(ctx, id, req.Name, themeJSON)
+	return s.repo.UpdateProject(ctx, id, req.Name, themeJSON, req.BaseUpdatedAt)
 }
 
 func (s *Service) DeleteProject(ctx context.Context, id uuid.UUID) error {

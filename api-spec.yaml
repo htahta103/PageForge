@@ -123,6 +123,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     delete:
       summary: Delete project and all pages
@@ -178,6 +180,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /projects/{projectId}/pages/{pageId}:
     parameters:
@@ -224,6 +228,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     delete:
       summary: Delete a page
@@ -504,6 +510,12 @@ components:
           maxLength: 255
         theme:
           $ref: "#/components/schemas/Theme"
+        baseUpdatedAt:
+          type: string
+          format: date-time
+          description: |
+            Optional. When set, the update succeeds only if the project's updatedAt still matches (optimistic concurrency).
+            Use the updatedAt value from the last GET response.
 
     PageSummary:
       type: object
@@ -581,6 +593,12 @@ components:
           maxItems: 2000
         order:
           type: integer
+        baseUpdatedAt:
+          type: string
+          format: date-time
+          description: |
+            Optional. When set, the save succeeds only if the page's updatedAt still matches (optimistic concurrency).
+            Use the updatedAt value from the last GET response.
 
     ExportResult:
       type: object
@@ -636,3 +654,13 @@ components:
           example:
             code: not_found
             message: "Project not found"
+
+    Conflict:
+      description: Duplicate value or concurrent modification
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: conflict
+            message: "a page with this slug already exists in this project"

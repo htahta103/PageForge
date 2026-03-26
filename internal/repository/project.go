@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -75,7 +76,8 @@ func (r *Repository) CreateProject(ctx context.Context, name string, theme json.
 	return &p, nil
 }
 
-func (r *Repository) UpdateProject(ctx context.Context, id uuid.UUID, name *string, theme *json.RawMessage) (*model.Project, error) {
+func (r *Repository) UpdateProject(ctx context.Context, id uuid.UUID, name *string, theme *json.RawMessage, baseUpdatedAt *time.Time) (*model.Project, error) {
+	base := normalizeConcurrencyTS(baseUpdatedAt)
 	var p model.Project
 	var themeJSON []byte
 	err := r.pool.QueryRow(ctx, `
@@ -83,9 +85,16 @@ func (r *Repository) UpdateProject(ctx context.Context, id uuid.UUID, name *stri
 		SET name = COALESCE($2, name),
 		    theme = COALESCE($3, theme)
 		WHERE id = $1
+		  AND ($4::timestamptz IS NULL OR updated_at = $4::timestamptz)
 		RETURNING id, name, theme, created_at, updated_at
-	`, id, name, theme).Scan(&p.ID, &p.Name, &themeJSON, &p.CreatedAt, &p.UpdatedAt)
+	`, id, name, theme, base).Scan(&p.ID, &p.Name, &themeJSON, &p.CreatedAt, &p.UpdatedAt)
 	if err == pgx.ErrNoRows {
+		if base != nil {
+			if _, err2 := r.GetProject(ctx, id); err2 != nil {
+				return nil, err2
+			}
+			return nil, &model.ConflictError{Message: "project was modified by another save; retry with current updatedAt from GET"}
+		}
 		return nil, &model.NotFoundError{Resource: "Project", ID: id.String()}
 	}
 	if err != nil {
