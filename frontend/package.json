@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "format": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
