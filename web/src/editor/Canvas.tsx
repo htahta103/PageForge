@@ -2,6 +2,7 @@ import { useDroppable } from '@dnd-kit/core'
 import type { ComponentId } from '../types/components'
 import { getDefinition } from '../registry/registry'
 import { useAppStore } from '../store/useAppStore'
+import { layoutToStyle, normalizeLayout } from '../utils/componentLayout'
 
 function NodeView({ id }: { id: ComponentId }) {
   const node = useAppStore((s) => s.components[id])
@@ -19,12 +20,15 @@ function NodeView({ id }: { id: ComponentId }) {
     </div>
   )
 
+  const layoutStyle = layoutToStyle(normalizeLayout(node.props.layout))
+
   return (
     <div
       className={[
         'rounded-[var(--radius-md)] outline-none ring-offset-2',
         selected ? 'ring-2 ring-[color:var(--color-primary)]' : 'hover:ring-1 hover:ring-black/10',
       ].join(' ')}
+      style={layoutStyle}
       role="button"
       tabIndex={0}
       onClick={(e) => {
