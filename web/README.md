@@ -1,3 +1,14 @@
+# PageForge `web/` (experimental)
+
+This directory is **not part of the supported PageForge v1 pipeline**.
+
+- Canonical UI: `../frontend/`
+- Supported commands: see `../Makefile` and `../README.md`
+
+If you’re working in here, please treat it as experimental and expect drift unless/until it’s promoted to canonical.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
