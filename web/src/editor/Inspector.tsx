@@ -1,6 +1,8 @@
 import { getDefinition, type PropField } from '../registry/registry'
 import { useAppStore } from '../store/useAppStore'
+import type { BreakpointId } from '../types/components'
 import { normalizeLayout, type LayoutState } from '../utils/componentLayout'
+import { isPropOverridden, resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
 import {
   DEFAULT_TYPOGRAPHY,
   FONT_PRESETS,
@@ -15,12 +17,53 @@ const inputClass =
 const labelClass = 'text-xs font-medium'
 const subMuted = 'text-[11px] text-[color:var(--color-muted)]'
 
+function OverrideChrome({
+  activeBreakpoint,
+  isOverridden,
+  onClear,
+}: {
+  activeBreakpoint: BreakpointId
+  isOverridden: boolean
+  onClear?: () => void
+}) {
+  if (activeBreakpoint === 'desktop') return null
+  return (
+    <div className="mb-1 flex flex-wrap items-center gap-2">
+      <span
+        className={[
+          'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+          isOverridden
+            ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100'
+            : 'bg-black/5 text-[color:var(--color-muted)]',
+        ].join(' ')}
+      >
+        {isOverridden ? 'Overridden' : 'Inherited'}
+      </span>
+      {isOverridden && onClear ? (
+        <button
+          className="text-[11px] text-[color:var(--color-primary)] underline decoration-dotted hover:opacity-80"
+          type="button"
+          onClick={onClear}
+        >
+          Clear override
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
 function LayoutInspectorSection({
   layout,
   onChange,
+  activeBreakpoint,
+  isOverridden,
+  onClearOverride,
 }: {
   layout: unknown
   onChange: (next: LayoutState) => void
+  activeBreakpoint: BreakpointId
+  isOverridden: boolean
+  onClearOverride?: () => void
 }) {
   const L = normalizeLayout(layout)
   const showFlex = L.display === 'flex'
@@ -29,6 +72,11 @@ function LayoutInspectorSection({
   return (
     <div className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
       <div className={labelClass}>Layout</div>
+      <OverrideChrome
+        activeBreakpoint={activeBreakpoint}
+        isOverridden={isOverridden}
+        onClear={onClearOverride}
+      />
 
       <label className="block space-y-1">
         <div className={subMuted}>Display</div>
@@ -568,8 +616,10 @@ const ROOT_ID = 'root'
 export function Inspector() {
   const selectedId = useAppStore((s) => s.selectedIds[0] ?? null)
   const node = useAppStore((s) => (selectedId ? s.components[selectedId] : null))
+  const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
   const setProp = useAppStore((s) => s.setProp)
   const deleteComponents = useAppStore((s) => s.deleteComponents)
+  const clearPropOverride = useAppStore((s) => s.clearPropOverride)
 
   if (!selectedId || !node) {
     return (
@@ -585,6 +635,9 @@ export function Inspector() {
   const def = getDefinition(node.type)
   const inspector = def?.inspector ?? {}
   const showTypography = Boolean(def?.supportsTypography)
+  const resolvedProps = resolvePropsForBreakpoint(node, activeBreakpoint)
+  const layoutOverridden = isPropOverridden(node, activeBreakpoint, 'layout')
+  const typographyOverridden = isPropOverridden(node, activeBreakpoint, 'typography')
 
   return (
     <div className="space-y-3">
@@ -604,6 +657,13 @@ export function Inspector() {
         </div>
       </div>
 
+      {activeBreakpoint !== 'desktop' ? (
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-3 py-2 text-xs text-[color:var(--color-muted)]">
+          Editing <span className="font-semibold capitalize text-[color:var(--color-fg)]">{activeBreakpoint}</span>{' '}
+          overrides. Unset fields use the desktop base.
+        </div>
+      ) : null}
+
       <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
         <div className="text-xs text-[color:var(--color-muted)]">
           <div>
@@ -613,44 +673,69 @@ export function Inspector() {
       </div>
 
       <LayoutInspectorSection
-        layout={node.props.layout}
+        layout={resolvedProps.layout}
+        activeBreakpoint={activeBreakpoint}
+        isOverridden={layoutOverridden}
+        onClearOverride={
+          layoutOverridden ? () => clearPropOverride(node.id, 'layout') : undefined
+        }
         onChange={(next) => setProp(node.id, 'layout', next)}
       />
 
       {showTypography ? (
-        <TypographyInspectorSection
-          typography={node.props.typography}
-          onChange={(next) => setProp(node.id, 'typography', next)}
-        />
+        <div className="space-y-2">
+          <OverrideChrome
+            activeBreakpoint={activeBreakpoint}
+            isOverridden={typographyOverridden}
+            onClear={
+              typographyOverridden
+                ? () => clearPropOverride(node.id, 'typography')
+                : undefined
+            }
+          />
+          <TypographyInspectorSection
+            typography={resolvedProps.typography}
+            onChange={(next) => setProp(node.id, 'typography', next)}
+          />
+        </div>
       ) : null}
 
       <div className="space-y-3">
-        {Object.entries(inspector).map(([key, field]) => (
-          <Field
-            key={key}
-            field={field}
-            value={node.props[key]}
-            onChange={(v) => {
-              if (node.type === 'Select' && key === 'options' && typeof v === 'string') {
-                const lines = v
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                setProp(node.id, key, lines)
-                return
-              }
-              if (node.type === 'RadioGroup' && key === 'options' && typeof v === 'string') {
-                const lines = v
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                setProp(node.id, key, lines)
-                return
-              }
-              setProp(node.id, key, v)
-            }}
-          />
-        ))}
+        {Object.entries(inspector).map(([key, field]) => {
+          const overridden = isPropOverridden(node, activeBreakpoint, key)
+          return (
+            <div key={key}>
+              <OverrideChrome
+                activeBreakpoint={activeBreakpoint}
+                isOverridden={overridden}
+                onClear={overridden ? () => clearPropOverride(node.id, key) : undefined}
+              />
+              <Field
+                field={field}
+                value={resolvedProps[key]}
+                onChange={(v) => {
+                  if (node.type === 'Select' && key === 'options' && typeof v === 'string') {
+                    const lines = v
+                      .split('\n')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                    setProp(node.id, key, lines)
+                    return
+                  }
+                  if (node.type === 'RadioGroup' && key === 'options' && typeof v === 'string') {
+                    const lines = v
+                      .split('\n')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                    setProp(node.id, key, lines)
+                    return
+                  }
+                  setProp(node.id, key, v)
+                }}
+              />
+            </div>
+          )
+        })}
         {!Object.keys(inspector).length ? (
           <div className="text-sm text-[color:var(--color-muted)]">No editable props.</div>
         ) : null}

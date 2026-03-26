@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import type { BreakpointId, ComponentId, ComponentNode } from '../types/components'
+import type {
+  BreakpointId,
+  BreakpointPropOverrides,
+  ComponentId,
+  ComponentNode,
+} from '../types/components'
 
 const ROOT_ID: ComponentId = 'root'
 
@@ -19,6 +24,7 @@ export interface AppActions {
   addComponent: (type: string, parentId?: ComponentId, initialProps?: Record<string, unknown>) => ComponentId
   deleteComponents: (ids: ComponentId[]) => void
   setProp: (id: ComponentId, key: string, value: unknown) => void
+  clearPropOverride: (id: ComponentId, key: string) => void
 }
 
 const rootNode: ComponentNode = { id: ROOT_ID, type: 'Root', props: {}, children: [] }
@@ -96,10 +102,53 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => {
           const node = state.components[id]
           if (!node) return state
+          const bp = state.activeBreakpoint
+          if (bp === 'desktop') {
+            return {
+              components: {
+                ...state.components,
+                [id]: { ...node, props: { ...node.props, [key]: value } },
+              },
+            }
+          }
+          const prevAll = node.breakpointOverrides ?? {}
+          const prevBp = prevAll[bp] ?? {}
           return {
             components: {
               ...state.components,
-              [id]: { ...node, props: { ...node.props, [key]: value } },
+              [id]: {
+                ...node,
+                breakpointOverrides: {
+                  ...prevAll,
+                  [bp]: { ...prevBp, [key]: value },
+                },
+              },
+            },
+          }
+        })
+      },
+      clearPropOverride: (id, key) => {
+        set((state) => {
+          const node = state.components[id]
+          if (!node) return state
+          const bp = state.activeBreakpoint
+          if (bp === 'desktop') return state
+          const ov = node.breakpointOverrides?.[bp]
+          if (!ov || !(key in ov)) return state
+          const nextBp = { ...ov }
+          delete nextBp[key]
+          const nextAll = { ...node.breakpointOverrides }
+          if (Object.keys(nextBp).length === 0) {
+            delete nextAll[bp]
+          } else {
+            nextAll[bp] = nextBp
+          }
+          const finalOv: BreakpointPropOverrides | undefined =
+            Object.keys(nextAll).length === 0 ? undefined : (nextAll as BreakpointPropOverrides)
+          return {
+            components: {
+              ...state.components,
+              [id]: { ...node, breakpointOverrides: finalOv },
             },
           }
         })

@@ -4,24 +4,29 @@ import { BREAKPOINT_WIDTH_PX } from '../lib/breakpoints'
 import { getDefinition } from '../registry/registry'
 import { useAppStore } from '../store/useAppStore'
 import { layoutToStyle, normalizeLayout } from '../utils/componentLayout'
+import { resolvePropsForBreakpoint } from '../utils/resolveBreakpointProps'
 
 function NodeView({ id }: { id: ComponentId }) {
   const node = useAppStore((s) => s.components[id])
   const selectOne = useAppStore((s) => s.selectOne)
   const selectedIds = useAppStore((s) => s.selectedIds)
+  const activeBreakpoint = useAppStore((s) => s.activeBreakpoint)
 
   if (!node) return null
   const def = getDefinition(node.type)
   const children = node.children.map((cid) => <NodeView key={cid} id={cid} />)
   const selected = selectedIds.includes(id)
 
-  const rendered = def?.render(node, children) ?? (
+  const resolvedProps = resolvePropsForBreakpoint(node, activeBreakpoint)
+  const resolvedNode = { ...node, props: resolvedProps }
+
+  const rendered = def?.render(resolvedNode, children) ?? (
     <div className="rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3 text-sm">
       Unknown component: <code className="font-mono">{node.type}</code>
     </div>
   )
 
-  const layoutStyle = layoutToStyle(normalizeLayout(node.props.layout))
+  const layoutStyle = layoutToStyle(normalizeLayout(resolvedProps.layout))
 
   return (
     <div
