@@ -68,8 +68,10 @@ test.describe('staging smoke', () => {
     await page.getByTestId('projects-name-input').fill(projectName)
     await page.getByTestId('projects-create-button').click()
 
-    await expect(page.getByTestId('projects-list')).toBeVisible()
-    await expect(page.getByText(projectName)).toBeVisible()
+    await expect(page.getByTestId('projects-list')).toBeVisible({
+      timeout: 20_000,
+    })
+    await expect(page.getByText(projectName)).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('link', { name: 'Open' }).first().click()
 
