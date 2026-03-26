@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -31,6 +32,11 @@ func writeError(w http.ResponseWriter, status int, code, message string) {
 }
 
 func handleError(w http.ResponseWriter, err error) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		writeError(w, http.StatusGatewayTimeout, "timeout", "request timed out")
+		return
+	}
+
 	var validationErr *model.ValidationError
 	if errors.As(err, &validationErr) {
 		writeError(w, http.StatusBadRequest, "validation_error", err.Error())

@@ -1,18 +1,25 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/htahta103/PageForge/backend/internal/model"
 )
+
+const projectsRequestTimeout = 20 * time.Second
 
 func (h *Handler) ListProjects(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	projects, total, err := h.svc.ListProjects(r.Context(), limit, offset)
+	ctx, cancel := context.WithTimeout(r.Context(), projectsRequestTimeout)
+	defer cancel()
+
+	projects, total, err := h.svc.ListProjects(ctx, limit, offset)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -31,7 +38,10 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.svc.CreateProject(r.Context(), req)
+	ctx, cancel := context.WithTimeout(r.Context(), projectsRequestTimeout)
+	defer cancel()
+
+	project, err := h.svc.CreateProject(ctx, req)
 	if err != nil {
 		handleError(w, err)
 		return
