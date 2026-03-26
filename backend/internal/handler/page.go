@@ -116,7 +116,10 @@ func (h *Handler) DuplicatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req model.DuplicatePageRequest
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "validation_error", "invalid JSON body")
+		return
+	}
 
 	page, err := h.svc.DuplicatePage(r.Context(), projectID, pageID, req.Name)
 	if err != nil {
