@@ -11,6 +11,10 @@ dev-backend: ## Start backend with hot reload (requires air)
 dev-frontend: ## Start frontend dev server
 	cd frontend && npm run dev
 
+dev-web: ## (Experimental) Start legacy web/ dev server
+	@echo "web/ is experimental and not part of the supported pipeline. Canonical UI is frontend/."
+	@echo "If you really meant web/: cd web && npm install && npm run dev"
+
 dev-db: ## Start only PostgreSQL and run migrations
 	docker compose up -d postgres migrate
 

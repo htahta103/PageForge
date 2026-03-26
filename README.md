@@ -22,6 +22,14 @@ make dev-backend         # Start Go backend (port 8080)
 make dev-frontend        # Start Vite dev server (port 5173)
 ```
 
+## Canonical Frontend
+
+**`frontend/` is the canonical UI for PageForge v1.** It is the only frontend wired into:
+- `docker-compose.yml` (nginx serves the built assets)
+- `Makefile` targets (`dev-frontend`, `build-frontend`, `test-frontend`, etc.)
+
+`web/` exists as an experimental/legacy app and is **not** part of the supported build/test/deploy pipeline.
+
 ## Project Structure
 
 ```
@@ -36,6 +44,7 @@ make dev-frontend        # Start Vite dev server (port 5173)
 │   └── migrations/          # SQL migrations (golang-migrate)
 ├── frontend/
 │   └── src/                 # React + TypeScript application
+├── web/                      # Experimental/legacy UI (not in pipeline)
 ├── nginx/                   # Reverse proxy config
 ├── docker-compose.yml       # Local development orchestration
 ├── Makefile                 # Build/test/deploy targets
