@@ -2,11 +2,25 @@ export interface Env {
   ORIGIN_URL: string
 }
 
-function json(data: unknown, init?: ResponseInit) {
+function corsHeaders(req: Request): HeadersInit {
+  const origin = req.headers.get('origin') ?? '*'
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'access-control-allow-headers':
+      req.headers.get('access-control-request-headers') ??
+      'content-type,authorization',
+    'access-control-max-age': '86400',
+    vary: 'origin',
+  }
+}
+
+function json(req: Request, data: unknown, init?: ResponseInit) {
   return new Response(JSON.stringify(data), {
     ...init,
     headers: {
       'content-type': 'application/json; charset=utf-8',
+      ...corsHeaders(req),
       ...(init?.headers ?? {}),
     },
   })
@@ -22,17 +36,22 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url)
 
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(req) })
+    }
+
     if (url.pathname === '/health' || url.pathname === '/api/v1/health') {
-      return json({ status: 'ok', service: 'pageforge-api-staging' })
+      return json(req, { status: 'ok', service: 'pageforge-api-staging' })
     }
 
     if (!url.pathname.startsWith('/api/v1/')) {
-      return json({ code: 'not_found', message: 'Not found' }, { status: 404 })
+      return json(req, { code: 'not_found', message: 'Not found' }, { status: 404 })
     }
 
     const origin = normalizeOrigin(env.ORIGIN_URL)
     if (!origin) {
       return json(
+        req,
         {
           code: 'not_configured',
           message:
@@ -51,11 +70,19 @@ export default {
     headers.set('x-forwarded-host', url.host)
     headers.set('x-forwarded-proto', url.protocol.replace(':', ''))
 
-    return fetch(upstream.toString(), {
+    const res = await fetch(upstream.toString(), {
       method: req.method,
       headers,
       body: req.body,
       redirect: 'manual',
+    })
+
+    const outHeaders = new Headers(res.headers)
+    for (const [k, v] of Object.entries(corsHeaders(req))) outHeaders.set(k, v)
+    return new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: outHeaders,
     })
   },
 }
