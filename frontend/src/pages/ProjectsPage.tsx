@@ -20,7 +20,13 @@ export function ProjectsPage() {
     setError(false)
     try {
       const res = await listProjects()
-      setItems(res.data)
+      const data = (res as unknown as { data?: unknown }).data
+      if (!Array.isArray(data)) {
+        setError(true)
+        setItems([])
+        return
+      }
+      setItems(data as ProjectSummary[])
     } catch {
       setError(true)
     } finally {

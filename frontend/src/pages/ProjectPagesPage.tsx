@@ -29,7 +29,13 @@ export function ProjectPagesPage() {
         listPages(projectId),
       ])
       setProject(p)
-      setPages(pg.data)
+      const data = (pg as unknown as { data?: unknown }).data
+      if (!Array.isArray(data)) {
+        setError(true)
+        setPages([])
+        return
+      }
+      setPages(data as PageSummary[])
     } catch {
       setError(true)
     } finally {
