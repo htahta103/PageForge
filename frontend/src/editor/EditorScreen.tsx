@@ -47,10 +47,9 @@ export function EditorScreen() {
 
   useEffect(() => {
     if (!projectId || !pageId) return
-    void load(projectId, pageId)
-    // `load` comes from zustand; in practice it should be referentially stable.
-    // Avoid depending on it to prevent accidental render loops if the selector
-    // returns a new function reference.
+    const { reset, load: loadPage } = useEditorStore.getState()
+    reset()
+    void loadPage(projectId, pageId)
   }, [projectId, pageId])
 
   async function onExport(format: 'html' | 'react') {

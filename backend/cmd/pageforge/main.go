@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/htahta103/PageForge/backend/internal/config"
 	"github.com/htahta103/PageForge/backend/internal/handler"
 	"github.com/htahta103/PageForge/backend/internal/middleware"
 	"github.com/htahta103/PageForge/backend/internal/repository"
@@ -58,7 +59,7 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{getEnv("CORS_ORIGIN", "http://localhost:5173")},
+		AllowedOrigins:   config.AllowedOrigins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
 		ExposedHeaders:   []string{"X-Request-ID"},
