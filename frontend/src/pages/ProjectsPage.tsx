@@ -62,37 +62,37 @@ export function ProjectsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">
           {t('projects.title')}
         </h1>
-        <p className="mt-1 text-sm text-neutral-600">{t('projects.subtitle')}</p>
+        <p className="mt-1 text-sm text-fg-muted">{t('projects.subtitle')}</p>
       </div>
 
       <form
         onSubmit={onCreate}
-        className="rounded-xl border border-neutral-200 bg-white p-4"
+        className="rounded-xl border border-border bg-surface p-4"
         data-testid="projects-create-form"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex-1 space-y-1">
-            <div className="text-xs font-medium text-neutral-600">
+            <div className="text-xs font-medium text-fg-muted">
               {t('projects.nameLabel')}
             </div>
             <input
-              className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-subtle"
               value={name}
               placeholder={t('projects.namePlaceholder')}
               onChange={(e) => setName(e.target.value)}
               data-testid="projects-name-input"
             />
             {nameError && (
-              <div className="text-xs text-red-600">{t(nameError)}</div>
+              <div className="text-xs text-danger">{t(nameError)}</div>
             )}
           </label>
           <button
             type="submit"
             disabled={creating}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent hover:bg-accent-hover disabled:opacity-60"
             data-testid="projects-create-button"
           >
             {creating ? t('projects.creating') : t('projects.create')}
@@ -101,20 +101,20 @@ export function ProjectsPage() {
       </form>
 
       {loading ? (
-        <div className="text-sm text-neutral-600">{t('editor.loading')}</div>
+        <div className="text-sm text-fg-muted">{t('editor.loading')}</div>
       ) : error ? (
-        <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="space-y-2 rounded-lg border border-danger-border bg-danger-bg p-4 text-sm text-danger-fg">
           <div>{t('projects.loadError')}</div>
           <button
             type="button"
-            className="rounded-md bg-white px-3 py-1.5 text-sm ring-1 ring-red-200"
+            className="rounded-md border border-danger-border bg-surface px-3 py-1.5 text-sm text-danger-fg"
             onClick={() => void refresh()}
           >
             {t('common.retry')}
           </button>
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600">
+        <div className="rounded-xl border border-border bg-surface p-6 text-sm text-fg-muted">
           {t('projects.empty')}
         </div>
       ) : (
@@ -125,17 +125,17 @@ export function ProjectsPage() {
           {items.map((p) => (
             <div
               key={p.id}
-              className="rounded-xl border border-neutral-200 bg-white p-4"
+              className="rounded-xl border border-border bg-surface p-4"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="font-semibold text-neutral-900">{p.name}</div>
-                  <div className="mt-1 text-xs text-neutral-500">
+                  <div className="font-semibold text-fg">{p.name}</div>
+                  <div className="mt-1 text-xs text-fg-subtle">
                     {t('projects.pageCount', { count: p.pageCount })}
                   </div>
                 </div>
                 <Link
-                  className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
+                  className="rounded-md bg-inverse px-3 py-1.5 text-sm font-medium text-inverse-fg hover:opacity-90"
                   to={`/projects/${p.id}`}
                   data-testid={`projects-open-${p.id}`}
                 >

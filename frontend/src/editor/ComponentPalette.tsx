@@ -30,8 +30,8 @@ function PaletteTile({
       {...listeners}
       {...attributes}
       className={[
-        'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-medium shadow-sm',
-        'hover:border-neutral-300 hover:bg-neutral-50',
+        'w-full rounded-md border border-border bg-surface px-3 py-2 text-left text-sm font-medium text-fg shadow-sm',
+        'hover:border-fg-subtle/30 hover:bg-muted',
         isDragging ? 'opacity-70' : '',
       ].join(' ')}
     >
@@ -46,7 +46,7 @@ export function ComponentPalette() {
 
   return (
     <div className="space-y-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <div className="text-xs font-semibold uppercase tracking-wide text-fg-subtle">
         {t('editor.palette.title')}
       </div>
       <div className="grid grid-cols-1 gap-2">

@@ -103,7 +103,7 @@ export function EditorScreen() {
 
   if (loadState.status === 'loading') {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-white p-6 text-sm text-neutral-600">
+      <div className="rounded-lg border border-border bg-surface p-6 text-sm text-fg-muted">
         {t('editor.loading')}
       </div>
     )
@@ -111,11 +111,11 @@ export function EditorScreen() {
 
   if (loadState.status === 'error') {
     return (
-      <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-800">
+      <div className="space-y-3 rounded-lg border border-danger-border bg-danger-bg p-6 text-sm text-danger-fg">
         <div>{t('editor.loadError')}</div>
         <button
           type="button"
-          className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-red-800 ring-1 ring-red-200"
+          className="rounded-md border border-danger-border bg-surface px-3 py-1.5 text-sm font-medium text-danger-fg"
           onClick={() => void load(projectId, pageId)}
         >
           {t('common.retry')}
@@ -129,21 +129,18 @@ export function EditorScreen() {
       <div className="space-y-4" data-testid="editor-screen">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-sm text-neutral-500">
-              <Link
-                className="text-blue-700 hover:underline"
-                to={`/projects/${projectId}`}
-              >
+            <div className="text-sm text-fg-subtle">
+              <Link className="text-link hover:underline" to={`/projects/${projectId}`}>
                 {t('nav.projectPages')}
               </Link>
             </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-fg">
               {t('editor.title')}: {pageName}
             </h1>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-neutral-200 bg-white p-1">
+            <div className="flex rounded-lg border border-border bg-surface p-1">
               {(
                 [
                   ['desktop', 'editor.breakpoint.desktop'],
@@ -158,8 +155,8 @@ export function EditorScreen() {
                   className={[
                     'rounded-md px-2 py-1 text-xs font-medium',
                     activeBreakpoint === bp
-                      ? 'bg-neutral-900 text-white'
-                      : 'text-neutral-700 hover:bg-neutral-50',
+                      ? 'bg-inverse text-inverse-fg'
+                      : 'text-fg-muted hover:bg-muted',
                   ].join(' ')}
                 >
                   {t(key)}
@@ -169,35 +166,35 @@ export function EditorScreen() {
 
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-muted"
               onClick={() => temporal.getState().undo()}
             >
               {t('editor.undo')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-muted"
               onClick={() => temporal.getState().redo()}
             >
               {t('editor.redo')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-muted"
               onClick={() => void deleteSelected()}
             >
               {t('common.delete')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-muted"
               onClick={() => void onExport('html')}
             >
               {t('editor.export.html')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-muted"
               onClick={() => void onExport('react')}
             >
               {t('editor.export.react')}
@@ -205,7 +202,7 @@ export function EditorScreen() {
 
             <button
               type="button"
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent-hover disabled:opacity-60"
               disabled={saveState.status === 'saving'}
               onClick={() => void save()}
               data-testid="editor-save"
@@ -220,27 +217,30 @@ export function EditorScreen() {
         </div>
 
         {saveState.status === 'error' && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <div className="rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger-fg">
             {t('editor.saveError')}
           </div>
         )}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <aside className="lg:col-span-3 space-y-4">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="rounded-xl border border-border bg-surface p-4">
               <ComponentPalette />
             </div>
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="rounded-xl border border-border bg-surface p-4">
               <LayerTree />
             </div>
           </aside>
 
-          <section className="lg:col-span-6">
+          <section
+            className="lg:col-span-6 [color-scheme:light]"
+            data-testid="editor-canvas-column"
+          >
             <Canvas />
           </section>
 
           <aside className="lg:col-span-3">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="rounded-xl border border-border bg-surface p-4">
               <PropertyPanel />
             </div>
           </aside>

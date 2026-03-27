@@ -1,5 +1,8 @@
 export const en = {
   'app.name': 'PageForge',
+  'theme.appearance': 'Appearance',
+  'theme.switchToLight': 'Switch to light mode',
+  'theme.switchToDark': 'Switch to dark mode',
   'nav.projects': 'Projects',
   'nav.backToProjects': 'All projects',
   'nav.pages': 'Pages',

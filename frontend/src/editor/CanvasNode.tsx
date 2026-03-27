@@ -47,7 +47,7 @@ export function CanvasNode({ id }: { id: string }) {
   const style = resolveComponentStyles(comp, bp)
   if (!comp.meta.visible) return null
 
-  const ring = selected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+  const ring = selected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''
   const hover = canHaveChildren && isOver ? 'bg-blue-50/50' : ''
   const children = (
     <div className="flex flex-col gap-2">

@@ -10,7 +10,7 @@ export default function App() {
   return (
     <I18nProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen bg-page text-fg">
           <AppHeader />
           <main className="mx-auto max-w-6xl px-4 py-6">
             <Routes>

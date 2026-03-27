@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PageForge</title>
+    <script>
+      (function () {
+        try {
+          var k = 'pageforge-ui-theme'
+          var isLight = localStorage.getItem(k) === 'light'
+          var r = document.documentElement
+          if (isLight) r.classList.remove('dark')
+          else r.classList.add('dark')
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

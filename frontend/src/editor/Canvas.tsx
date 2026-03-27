@@ -19,7 +19,7 @@ export function Canvas() {
     <div
       ref={setNodeRef}
       className={[
-        'min-h-[480px] rounded-xl border-2 border-dashed border-neutral-300 bg-white p-4',
+        'min-h-[480px] rounded-xl border-2 border-dashed border-neutral-300 bg-white p-4 text-neutral-900',
         isOver ? 'border-blue-400 bg-blue-50/40' : '',
       ].join(' ')}
       data-testid="editor-canvas"

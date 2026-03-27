@@ -21,14 +21,14 @@ export function ExportModal({
       aria-modal="true"
       aria-labelledby="export-dialog-title"
     >
-      <div className="flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
-          <h2 id="export-dialog-title" className="text-sm font-semibold">
+      <div className="flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-surface shadow-xl">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <h2 id="export-dialog-title" className="text-sm font-semibold text-fg">
             {title}
           </h2>
           <button
             type="button"
-            className="rounded-md px-2 py-1 text-sm text-neutral-700 hover:bg-neutral-100"
+            className="rounded-md px-2 py-1 text-sm text-fg-muted hover:bg-muted"
             onClick={onClose}
           >
             {t('common.close')}
@@ -36,7 +36,7 @@ export function ExportModal({
         </div>
         <textarea
           readOnly
-          className="min-h-[320px] flex-1 p-3 font-mono text-xs"
+          className="min-h-[320px] flex-1 border-t border-border bg-page p-3 font-mono text-xs text-fg"
           value={content}
         />
       </div>

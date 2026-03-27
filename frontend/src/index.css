@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --pf-page: 250 250 250;
+    --pf-surface: 255 255 255;
+    --pf-muted: 245 245 245;
+    --pf-border: 229 229 229;
+    --pf-fg: 23 23 23;
+    --pf-fg-muted: 64 64 64;
+    --pf-fg-subtle: 115 115 115;
+    --pf-link: 29 78 216;
+    --pf-accent: 37 99 235;
+    --pf-accent-hover: 29 78 216;
+    --pf-on-accent: 255 255 255;
+    --pf-inverse-bg: 23 23 23;
+    --pf-inverse-fg: 255 255 255;
+    --pf-danger: 220 38 38;
+    --pf-danger-bg: 254 242 242;
+    --pf-danger-border: 254 202 202;
+    --pf-danger-fg: 153 27 27;
+    --pf-selection-bg: 239 246 255;
+    --pf-selection-border: 96 165 250;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --pf-page: 10 10 10;
+    --pf-surface: 23 23 23;
+    --pf-muted: 38 38 38;
+    --pf-border: 64 64 64;
+    --pf-fg: 245 245 245;
+    --pf-fg-muted: 212 212 212;
+    --pf-fg-subtle: 163 163 163;
+    --pf-link: 147 197 253;
+    --pf-accent: 59 130 246;
+    --pf-accent-hover: 37 99 235;
+    --pf-on-accent: 255 255 255;
+    --pf-inverse-bg: 245 245 245;
+    --pf-inverse-fg: 23 23 23;
+    --pf-danger: 248 113 113;
+    --pf-danger-bg: 69 10 10;
+    --pf-danger-border: 127 29 29;
+    --pf-danger-fg: 254 226 226;
+    --pf-selection-bg: 30 58 138;
+    --pf-selection-border: 96 165 250;
+  }
+}

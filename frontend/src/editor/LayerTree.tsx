@@ -42,13 +42,15 @@ function SortableRow({
         style={style}
         className={[
           'flex items-center gap-2 rounded-md border px-2 py-1 text-sm',
-          selected ? 'border-blue-400 bg-blue-50' : 'border-neutral-200 bg-white',
+          selected
+            ? 'border-selection-border bg-selection-bg'
+            : 'border-border bg-surface',
           isDragging ? 'opacity-70' : '',
         ].join(' ')}
       >
         <button
           type="button"
-          className="cursor-grab text-neutral-400 hover:text-neutral-700"
+          className="cursor-grab text-fg-subtle hover:text-fg-muted"
           aria-label={t('editor.layers.dragHandle')}
           {...attributes}
           {...listeners}
@@ -57,12 +59,12 @@ function SortableRow({
         </button>
         <button
           type="button"
-          className="flex-1 truncate text-left font-medium text-neutral-800"
+          className="flex-1 truncate text-left font-medium text-fg"
           onClick={() => select([id])}
         >
           {component.meta.name}
         </button>
-        <span className="text-xs text-neutral-500">{component.type}</span>
+        <span className="text-xs text-fg-subtle">{component.type}</span>
       </div>
       {(component.type === 'container' ||
         component.type === 'card' ||
@@ -112,14 +114,14 @@ export function LayerTree() {
 
   return (
     <div className="space-y-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <div className="text-xs font-semibold uppercase tracking-wide text-fg-subtle">
         {t('editor.layers.title')}
       </div>
-      <div className="rounded-lg border border-neutral-200 bg-white p-2">
+      <div className="rounded-lg border border-border bg-surface p-2">
         {hasRoots ? (
           <LayerGroup parentId={null} depth={0} />
         ) : (
-          <p className="text-xs text-neutral-500">{t('editor.layers.empty')}</p>
+          <p className="text-xs text-fg-subtle">{t('editor.layers.empty')}</p>
         )}
       </div>
     </div>
