@@ -30,7 +30,7 @@ make dev-frontend        # Start Vite dev server (port 5173)
 - `docker-compose.yml` (nginx serves the built assets)
 - `Makefile` targets (`dev-frontend`, `build-frontend`, `test-frontend`, etc.)
 
-`web/` exists as an experimental/legacy app and is **not** part of the supported build/test/deploy pipeline.
+The former experimental UI now lives under **`attic/web/`** (quarantined). It is **not** part of the supported build/test/deploy pipeline—use **`frontend/`** for product work.
 
 ## Project Structure
 
@@ -46,7 +46,8 @@ make dev-frontend        # Start Vite dev server (port 5173)
 │   └── migrations/          # SQL migrations (golang-migrate)
 ├── frontend/
 │   └── src/                 # React + TypeScript application
-├── web/                      # Experimental/legacy UI (not in pipeline)
+├── attic/
+│   └── web/                 # Quarantined legacy/experimental UI (not in pipeline)
 ├── nginx/                   # Reverse proxy config
 ├── docker-compose.yml       # Local development orchestration
 ├── Makefile                 # Build/test/deploy targets
