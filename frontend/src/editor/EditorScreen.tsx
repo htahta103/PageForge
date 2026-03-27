@@ -20,6 +20,8 @@ import { ComponentPalette } from './ComponentPalette'
 import { ExportModal } from './ExportModal'
 import { LayerTree } from './LayerTree'
 import { PropertyPanel } from './PropertyPanel'
+import { ShortcutsModal } from './ShortcutsModal'
+import { useEditorKeyboard } from './useEditorKeyboard'
 
 export function EditorScreen() {
   const t = useT()
@@ -40,6 +42,9 @@ export function EditorScreen() {
 
   const [exportOpen, setExportOpen] = useState(false)
   const [exportText, setExportText] = useState('')
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+
+  useEditorKeyboard(t, shortcutsOpen, setShortcutsOpen)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -184,6 +189,7 @@ export function EditorScreen() {
             <button
               type="button"
               className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              title={t('editor.tooltip.delete')}
               onClick={() => void deleteSelected()}
             >
               {t('common.delete')}
@@ -207,6 +213,7 @@ export function EditorScreen() {
               type="button"
               className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
               disabled={saveState.status === 'saving'}
+              title={t('editor.tooltip.save')}
               onClick={() => void save()}
               data-testid="editor-save"
             >
@@ -253,6 +260,7 @@ export function EditorScreen() {
         content={exportText}
         onClose={() => setExportOpen(false)}
       />
+      <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </DndContext>
   )
 }

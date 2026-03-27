@@ -5,15 +5,27 @@ import { temporal } from 'zundo'
 import { getPage, updatePage } from '@/lib/api/pages'
 import type { Breakpoint } from '@/lib/styles'
 import {
+  cloneWithNewIds,
+  extractSubtrees,
+  topLevelSelection,
+} from '@/lib/editorSubtree'
+import {
   collectSubtreeIds,
   componentsArrayToRecord,
   componentsRecordToArray,
+  findParentId,
   getRootIds,
   getSortedChildrenIds,
   nextOrderForNewChild,
 } from '@/lib/tree'
 import { getRegistration } from '@/registry'
 import type { Component, ComponentType } from '@/types/api'
+
+/** In-memory clipboard for canvas copy/paste (Cmd/Ctrl+C / +V). */
+let editorInternalClipboard: {
+  roots: string[]
+  nodes: Record<string, Component>
+} | null = null
 
 interface EditorState {
   projectId: string | null
@@ -48,6 +60,13 @@ interface EditorActions {
     }
   }) => void
   deleteSelected: () => void
+  copySelectionToInternalClipboard: () => void
+  pasteFromInternalClipboard: () => void
+  duplicateSelection: () => void
+  selectAllOnCanvas: () => void
+  clearSelection: () => void
+  nudgeSelected: (dx: number, dy: number) => void
+  groupSelection: (containerDisplayName: string) => void
   reorderWithinParent: (
     parentId: string | null,
     activeId: string,
@@ -183,21 +202,240 @@ export const useEditorStore = create<EditorState & EditorActions>()(
       },
 
       deleteSelected: () => {
-        const target = get().selectedIds[0]
-        if (!target) return
-        const subtree = collectSubtreeIds(get().components, target)
+        const tops = topLevelSelection(get().components, get().selectedIds)
+        if (tops.length === 0) return
+        const remove = new Set<string>()
+        for (const t of tops) {
+          for (const id of collectSubtreeIds(get().components, t)) remove.add(id)
+        }
         set((s) => {
           const next: Record<string, Component> = { ...s.components }
-          for (const rid of subtree) {
+          for (const rid of remove) {
             delete next[rid]
           }
           for (const comp of Object.values(next)) {
             next[comp.id] = {
               ...comp,
-              children: comp.children.filter((ch) => !subtree.has(ch)),
+              children: comp.children.filter((ch) => !remove.has(ch)),
             }
           }
           return { components: next, selectedIds: [] }
+        })
+      },
+
+      copySelectionToInternalClipboard: () => {
+        const { components, selectedIds } = get()
+        const tops = topLevelSelection(components, selectedIds)
+        if (tops.length === 0) return
+        editorInternalClipboard = {
+          roots: tops,
+          nodes: extractSubtrees(components, tops),
+        }
+      },
+
+      pasteFromInternalClipboard: () => {
+        if (!editorInternalClipboard) return
+        const { roots: clipRoots, nodes } = editorInternalClipboard
+        const { map: fresh, roots: pasteRoots } = cloneWithNewIds(nodes, clipRoots)
+        set((s) => {
+          const m: Record<string, Component> = { ...s.components, ...fresh }
+          const anchor = s.selectedIds[0]
+          const parentId = anchor ? findParentId(m, anchor) : null
+
+          const ordStart = (() => {
+            if (parentId) {
+              const sibs = getSortedChildrenIds(m, parentId)
+              const orders = sibs.map((id) => m[id]?.order ?? 0)
+              return orders.length ? Math.max(...orders) + 1 : 0
+            }
+            const r = getRootIds(m)
+            const orders = r.map((id) => m[id]?.order ?? 0)
+            return orders.length ? Math.max(...orders) + 1 : 0
+          })()
+
+          let o = ordStart
+          for (const r of pasteRoots) {
+            const node = m[r]
+            if (!node) continue
+            m[r] = { ...node, parentId: parentId ?? undefined, order: o }
+            o += 1
+            if (parentId) {
+              const par = m[parentId]
+              if (par) {
+                m[parentId] = { ...par, children: [...par.children, r] }
+              }
+            }
+          }
+
+          return { components: m, selectedIds: [...pasteRoots] }
+        })
+      },
+
+      duplicateSelection: () => {
+        const tops = topLevelSelection(get().components, get().selectedIds)
+        if (tops.length === 0) return
+        const sorted = [...tops].sort((a, b) => {
+          const ca = get().components[a]
+          const cb = get().components[b]
+          return (ca?.order ?? 0) - (cb?.order ?? 0)
+        })
+        set((s) => {
+          let m: Record<string, Component> = { ...s.components }
+          const newSelected: string[] = []
+          for (const tid of sorted) {
+            const fragment = extractSubtrees(m, [tid])
+            const { map: cloned, roots } = cloneWithNewIds(fragment, [tid])
+            const r0 = roots[0]
+            if (!r0) continue
+            const p = findParentId(m, tid)
+            m = { ...m, ...cloned }
+            const ord = (() => {
+              if (p) {
+                const sibs = getSortedChildrenIds(m, p).filter((id) => id !== r0)
+                const orders = sibs.map((id) => m[id]?.order ?? 0)
+                return orders.length ? Math.max(...orders) + 1 : 0
+              }
+              const rootsNow = getRootIds(m).filter((id) => id !== r0)
+              const orders = rootsNow.map((id) => m[id]?.order ?? 0)
+              return orders.length ? Math.max(...orders) + 1 : 0
+            })()
+            m[r0] = { ...m[r0]!, parentId: p ?? undefined, order: ord }
+            if (p) {
+              const par = m[p]!
+              m[p] = { ...par, children: [...par.children, r0] }
+            }
+            newSelected.push(r0)
+          }
+          return { components: m, selectedIds: newSelected }
+        })
+      },
+
+      selectAllOnCanvas: () => {
+        const ids = Object.keys(get().components)
+        if (ids.length === 0) return
+        set({ selectedIds: ids })
+      },
+
+      clearSelection: () => set({ selectedIds: [] }),
+
+      nudgeSelected: (dx, dy) => {
+        if (dx === 0 && dy === 0) return
+        const tops = topLevelSelection(get().components, get().selectedIds)
+        if (tops.length === 0) return
+        const parsePx = (v: string | undefined): number => {
+          if (!v) return 0
+          const m = String(v).match(/^(-?[\d.]+)px$/)
+          return m ? parseFloat(m[1]!) : 0
+        }
+        const fmtPx = (n: number) => `${Math.round(n)}px`
+        set((s) => {
+          const next: Record<string, Component> = { ...s.components }
+          for (const id of tops) {
+            const c = next[id]
+            if (!c) continue
+            const base = { ...c.styles.base }
+            const ml = parsePx(base.marginLeft) + dx
+            const mt = parsePx(base.marginTop) + dy
+            base.marginLeft = fmtPx(ml)
+            base.marginTop = fmtPx(mt)
+            next[id] = {
+              ...c,
+              styles: {
+                ...c.styles,
+                base,
+              },
+            }
+          }
+          return { components: next }
+        })
+      },
+
+      groupSelection: (containerDisplayName) => {
+        const { components: map, selectedIds } = get()
+        const tops = topLevelSelection(map, selectedIds)
+        if (tops.length < 1) return
+        const parentId = findParentId(map, tops[0]!)
+        if (tops.some((t) => findParentId(map, t) !== parentId)) return
+
+        const reg = getRegistration('container')
+        if (!reg) return
+
+        set((s) => {
+          const m: Record<string, Component> = { ...s.components }
+          const sorted = [...tops].sort(
+            (a, b) => (m[a]?.order ?? 0) - (m[b]?.order ?? 0),
+          )
+          const topsSet = new Set(sorted)
+          const cid = crypto.randomUUID()
+
+          const indexOfFirst = (() => {
+            if (parentId) {
+              const sibs = getSortedChildrenIds(m, parentId)
+              const idxs = sorted.map((t) => sibs.indexOf(t)).filter((i) => i >= 0)
+              return idxs.length ? Math.min(...idxs) : 0
+            }
+            const sibs = getRootIds(m)
+            const idxs = sorted.map((t) => sibs.indexOf(t)).filter((i) => i >= 0)
+            return idxs.length ? Math.min(...idxs) : 0
+          })()
+
+          const newNode: Component = {
+            id: cid,
+            type: reg.type,
+            parentId: parentId ?? undefined,
+            children: [...sorted],
+            props: { ...reg.defaultProps },
+            styles: {
+              base: { ...reg.defaultStyles.base },
+              tablet: reg.defaultStyles.tablet
+                ? { ...reg.defaultStyles.tablet }
+                : undefined,
+              mobile: reg.defaultStyles.mobile
+                ? { ...reg.defaultStyles.mobile }
+                : undefined,
+            },
+            meta: { name: containerDisplayName, locked: false, visible: true },
+            order: 0,
+          }
+          m[cid] = newNode
+
+          if (parentId) {
+            const p = m[parentId]!
+            const ordered = getSortedChildrenIds(m, parentId)
+            const filtered = ordered.filter((id) => !topsSet.has(id))
+            const newChildren = [
+              ...filtered.slice(0, indexOfFirst),
+              cid,
+              ...filtered.slice(indexOfFirst),
+            ]
+            m[parentId] = { ...p, children: newChildren }
+            for (let i = 0; i < newChildren.length; i++) {
+              const id = newChildren[i]!
+              const n = m[id]
+              if (n) m[id] = { ...n, order: i }
+            }
+          } else {
+            const ordered = getRootIds(m)
+            const filtered = ordered.filter((id) => !topsSet.has(id))
+            const newRoots = [
+              ...filtered.slice(0, indexOfFirst),
+              cid,
+              ...filtered.slice(indexOfFirst),
+            ]
+            for (let i = 0; i < newRoots.length; i++) {
+              const id = newRoots[i]!
+              const n = m[id]
+              if (n) m[id] = { ...n, parentId: undefined, order: i }
+            }
+          }
+
+          for (let i = 0; i < sorted.length; i++) {
+            const id = sorted[i]!
+            const n = m[id]
+            if (n) m[id] = { ...n, parentId: cid, order: i }
+          }
+
+          return { components: m, selectedIds: [cid] }
         })
       },
 

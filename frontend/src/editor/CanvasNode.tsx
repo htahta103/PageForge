@@ -63,7 +63,13 @@ export function CanvasNode({ id }: { id: string }) {
       className={['rounded-md', ring, hover].join(' ')}
       onClick={(e) => {
         e.stopPropagation()
-        select([id])
+        if (e.metaKey || e.ctrlKey) {
+          const cur = useEditorStore.getState().selectedIds
+          if (cur.includes(id)) select(cur.filter((i) => i !== id))
+          else select([...cur, id])
+        } else {
+          select([id])
+        }
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

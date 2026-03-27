@@ -58,7 +58,15 @@ function SortableRow({
         <button
           type="button"
           className="flex-1 truncate text-left font-medium text-neutral-800"
-          onClick={() => select([id])}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey) {
+              const cur = useEditorStore.getState().selectedIds
+              if (cur.includes(id)) select(cur.filter((i) => i !== id))
+              else select([...cur, id])
+            } else {
+              select([id])
+            }
+          }}
         >
           {component.meta.name}
         </button>

@@ -67,6 +67,23 @@ export const en = {
   'editor.export.react': 'Export React',
   'editor.export.error': 'Export failed.',
 
+  'editor.shortcuts.title': 'Keyboard shortcuts',
+  'editor.shortcuts.colAction': 'Action',
+  'editor.shortcuts.colShortcut': 'Shortcut',
+  'editor.shortcuts.row.delete': 'Delete selection',
+  'editor.shortcuts.row.duplicate': 'Duplicate',
+  'editor.shortcuts.row.copy': 'Copy',
+  'editor.shortcuts.row.paste': 'Paste',
+  'editor.shortcuts.row.selectAll': 'Select all',
+  'editor.shortcuts.row.nudge': 'Nudge position',
+  'editor.shortcuts.row.group': 'Group (wrap in container)',
+  'editor.shortcuts.row.deselect': 'Deselect',
+  'editor.shortcuts.row.cheatSheet': 'Show this sheet',
+
+  'editor.group.defaultName': 'Group',
+  'editor.tooltip.delete': 'Delete (Del)',
+  'editor.tooltip.save': 'Save',
+
   'prop.meta.name': 'Layer name',
   'prop.text.body': 'Text',
   'prop.button.label': 'Label',

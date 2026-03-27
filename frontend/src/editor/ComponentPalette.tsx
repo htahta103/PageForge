@@ -27,6 +27,7 @@ function PaletteTile({
       ref={setNodeRef}
       style={style}
       type="button"
+      title={label}
       {...listeners}
       {...attributes}
       className={[
