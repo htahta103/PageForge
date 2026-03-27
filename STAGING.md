@@ -12,6 +12,11 @@
   - Frontend should be built with `VITE_API_URL=https://pageforge-api-staging.htahta103.workers.dev` (the app will append `/api/v1` if missing).
   - The Worker proxies `/api/v1/*` to `ORIGIN_URL` (currently requires configuration + redeploy to serve the full API).
 
+### Fly backend (origin API)
+- **Fly app:** https://pageforge-api.fly.dev
+- **Health:** `GET /api/v1/health` => HTTP `200` with `{"status":"ok","version":"1.0.0"}`
+  - Backend startup is tolerant to transient Postgres warmup (no hard crash on initial DB ping failures).
+
 ## Access
 
 - **Credentials:** None for the public Pages site. Any future auth or admin URLs belong in the team password manager — do not commit them here.
