@@ -13,6 +13,7 @@ import {
   InputView,
   ListView,
   NavView,
+  RepeaterView,
   SpacerView,
   TextView,
   VideoView,
@@ -108,6 +109,7 @@ export function CanvasNode({ id }: { id: string }) {
           ))}
         </ListView>
       )}
+      {comp.type === 'repeater' && <RepeaterView c={comp} style={style} />}
       {comp.type !== 'text' &&
         comp.type !== 'button' &&
         comp.type !== 'image' &&
@@ -115,6 +117,7 @@ export function CanvasNode({ id }: { id: string }) {
         comp.type !== 'card' &&
         comp.type !== 'nav' &&
         comp.type !== 'list' &&
+        comp.type !== 'repeater' &&
         comp.type !== 'icon' &&
         comp.type !== 'divider' &&
         comp.type !== 'spacer' &&

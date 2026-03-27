@@ -168,4 +168,31 @@ func TestRenderNodeHTML_EscapesText(t *testing.T) {
 	}
 }
 
+func TestRenderNodeHTML_RepeaterBindsTemplate(t *testing.T) {
+	id := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	n := &componentNode{
+		comp: model.ComponentJSON{
+			ID:   id,
+			Type: model.ComponentTypeRepeater,
+			Props: map[string]any{
+				"template":   `<div>{{item.title}}-{{item.count}}</div>`,
+				"sampleData": `[{"title":"One","count":1},{"title":"Two","count":2}]`,
+			},
+			Meta:   model.ComponentMetaJSON{Visible: ptrBool(true)},
+			Styles: model.ComponentStylesJSON{},
+		},
+	}
+
+	out := renderNodeHTML(n)
+	if !strings.Contains(out, `data-pf-id="`+id+`"`) {
+		t.Fatalf("expected data attribute")
+	}
+	if !strings.Contains(out, "<div>One-1</div>") {
+		t.Fatalf("expected first row binding to render")
+	}
+	if !strings.Contains(out, "<div>Two-2</div>") {
+		t.Fatalf("expected second row binding to render")
+	}
+}
+
 func ptrBool(v bool) *bool { return &v }

@@ -364,6 +364,7 @@ components:
         - card
         - nav
         - list
+        - repeater
         - icon
         - divider
         - spacer

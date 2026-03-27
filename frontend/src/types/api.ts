@@ -7,6 +7,7 @@ export type ComponentType =
   | 'card'
   | 'nav'
   | 'list'
+  | 'repeater'
   | 'icon'
   | 'divider'
   | 'spacer'

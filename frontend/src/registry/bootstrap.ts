@@ -124,6 +124,25 @@ const list: Registration = {
   },
 }
 
+const repeater: Registration = {
+  type: 'repeater',
+  labelKey: 'palette.repeater',
+  defaultProps: {
+    template: '<div class="rounded p-2 border">{{item.title}}</div>',
+    sampleData: `[
+  {"title":"First item"},
+  {"title":"Second item"}
+]`,
+  },
+  defaultStyles: {
+    base: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    },
+  },
+}
+
 const icon: Registration = {
   type: 'icon',
   labelKey: 'palette.icon',
@@ -199,6 +218,7 @@ export function registerDefaultComponents() {
   registerComponent(card)
   registerComponent(nav)
   registerComponent(list)
+  registerComponent(repeater)
   registerComponent(icon)
   registerComponent(divider)
   registerComponent(spacer)

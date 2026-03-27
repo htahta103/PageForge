@@ -20,6 +20,7 @@ export function listPaletteRegistrations(): Registration[] {
     registrations.card,
     registrations.nav,
     registrations.list,
+    registrations.repeater,
     registrations.icon,
     registrations.divider,
     registrations.spacer,

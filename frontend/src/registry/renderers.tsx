@@ -1,6 +1,35 @@
 import type { Component } from '@/types/api'
 import type { CSSProperties, ReactNode } from 'react'
 
+function readSampleData(raw: unknown): unknown[] {
+  if (typeof raw !== 'string' || !raw.trim()) return []
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function getByPath(value: unknown, path: string): unknown {
+  if (!path) return value
+  const parts = path.split('.').filter(Boolean)
+  let current: unknown = value
+  for (const part of parts) {
+    if (current === null || typeof current !== 'object') return ''
+    current = (current as Record<string, unknown>)[part]
+  }
+  return current
+}
+
+function applyItemBindings(template: string, item: unknown): string {
+  return template.replace(/\{\{\s*item(?:\.([a-zA-Z0-9_.]+))?\s*\}\}/g, (_m, path) => {
+    const resolved = getByPath(item, typeof path === 'string' ? path : '')
+    if (resolved === null || resolved === undefined) return ''
+    return String(resolved)
+  })
+}
+
 export function TextView({
   c,
   style,
@@ -172,6 +201,25 @@ export function IconView({
     >
       {glyph}
     </span>
+  )
+}
+
+export function RepeaterView({ c, style }: { c: Component; style?: CSSProperties }) {
+  const template =
+    typeof c.props.template === 'string'
+      ? c.props.template
+      : '<div>{{item}}</div>'
+  const rows = readSampleData(c.props.sampleData)
+
+  return (
+    <div data-node-id={c.id} style={style}>
+      {rows.map((item, index) => (
+        <div
+          key={`${c.id}-row-${index}`}
+          dangerouslySetInnerHTML={{ __html: applyItemBindings(template, item) }}
+        />
+      ))}
+    </div>
   )
 }
 

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -402,6 +403,19 @@ func renderNodeHTML(n *componentNode) string {
 		}
 		b.WriteString("</ul>")
 		return b.String()
+	case model.ComponentTypeRepeater:
+		template := propString(n.comp.Props, "template")
+		if template == "" {
+			template = "<div>{{item}}</div>"
+		}
+		rows := parseRepeaterData(propString(n.comp.Props, "sampleData"))
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("<div %s>", idAttr))
+		for _, row := range rows {
+			b.WriteString(applyItemBindings(template, row))
+		}
+		b.WriteString("</div>")
+		return b.String()
 	case model.ComponentTypeIcon:
 		name := propString(n.comp.Props, "name", "icon", "value")
 		return fmt.Sprintf(`<span %s>%s</span>`, idAttr, html.EscapeString(name))
@@ -454,4 +468,47 @@ func propString(props map[string]any, keys ...string) string {
 		}
 	}
 	return ""
+}
+
+var itemBindingRe = regexp.MustCompile(`\{\{\s*item(?:\.([a-zA-Z0-9_.]+))?\s*\}\}`)
+
+func parseRepeaterData(raw string) []any {
+	if strings.TrimSpace(raw) == "" {
+		return []any{}
+	}
+	var out []any
+	if err := json.Unmarshal([]byte(raw), &out); err != nil {
+		return []any{}
+	}
+	return out
+}
+
+func applyItemBindings(template string, item any) string {
+	return itemBindingRe.ReplaceAllStringFunc(template, func(match string) string {
+		sub := itemBindingRe.FindStringSubmatch(match)
+		path := ""
+		if len(sub) > 1 {
+			path = sub[1]
+		}
+		v := valueAtPath(item, path)
+		if v == nil {
+			return ""
+		}
+		return html.EscapeString(fmt.Sprint(v))
+	})
+}
+
+func valueAtPath(value any, path string) any {
+	if strings.TrimSpace(path) == "" {
+		return value
+	}
+	current := value
+	for _, part := range strings.Split(path, ".") {
+		obj, ok := current.(map[string]any)
+		if !ok {
+			return ""
+		}
+		current = obj[part]
+	}
+	return current
 }

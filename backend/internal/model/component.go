@@ -12,6 +12,7 @@ const (
 	ComponentTypeCard       ComponentType = "card"
 	ComponentTypeNav        ComponentType = "nav"
 	ComponentTypeList       ComponentType = "list"
+	ComponentTypeRepeater   ComponentType = "repeater"
 	ComponentTypeIcon       ComponentType = "icon"
 	ComponentTypeDivider    ComponentType = "divider"
 	ComponentTypeSpacer     ComponentType = "spacer"
@@ -28,6 +29,7 @@ var ValidComponentTypes = map[ComponentType]bool{
 	ComponentTypeCard:       true,
 	ComponentTypeNav:        true,
 	ComponentTypeList:       true,
+	ComponentTypeRepeater:   true,
 	ComponentTypeIcon:       true,
 	ComponentTypeDivider:    true,
 	ComponentTypeSpacer:     true,

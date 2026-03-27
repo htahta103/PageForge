@@ -199,6 +199,29 @@ export function PropertyPanel() {
         </Field>
       )}
 
+      {comp.type === 'repeater' && (
+        <>
+          <Field label={t('prop.repeater.template')}>
+            <textarea
+              className="min-h-[120px] w-full rounded-md border border-neutral-200 px-2 py-1 font-mono text-xs"
+              value={String(comp.props.template ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { template: e.target.value } })
+              }
+            />
+          </Field>
+          <Field label={t('prop.repeater.sampleData')}>
+            <textarea
+              className="min-h-[140px] w-full rounded-md border border-neutral-200 px-2 py-1 font-mono text-xs"
+              value={String(comp.props.sampleData ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { sampleData: e.target.value } })
+              }
+            />
+          </Field>
+        </>
+      )}
+
       {comp.type === 'icon' && (
         <>
           <Field label={t('prop.icon.glyph')}>
