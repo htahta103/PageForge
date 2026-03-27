@@ -1,3 +1,9 @@
+import {
+  exportPageFromComponents,
+  exportPageZipFromComponents,
+  ExportValidationError,
+} from './pageExport'
+
 export interface Env {
   ORIGIN_URL: string
   DB: D1Database
@@ -251,6 +257,105 @@ export default {
           createdAt: (current as any).createdAt,
           updatedAt: now,
         })
+      }
+
+      const pageExportMatch = url.pathname.match(
+        /^\/api\/v1\/projects\/([^/]+)\/pages\/([^/]+)\/export$/,
+      )
+      if (pageExportMatch && req.method === 'GET') {
+        const projectId = pageExportMatch[1]
+        const pageId = pageExportMatch[2]
+        const formatRaw = url.searchParams.get('format')
+        if (!formatRaw) {
+          return json(req, { code: 'validation_error', message: 'format is required' }, { status: 400 })
+        }
+        if (formatRaw !== 'html' && formatRaw !== 'react') {
+          return json(
+            req,
+            { code: 'validation_error', message: 'format must be one of: html, react' },
+            { status: 400 },
+          )
+        }
+        const row = await env.DB.prepare(
+          'SELECT components FROM pages WHERE project_id = ? AND id = ? LIMIT 1',
+        )
+          .bind(projectId, pageId)
+          .first()
+        if (!row) {
+          return json(req, { code: 'not_found', message: 'Page not found' }, { status: 404 })
+        }
+        let components: unknown
+        try {
+          components = JSON.parse((row as any).components ?? '[]')
+        } catch {
+          return json(
+            req,
+            { code: 'validation_error', message: 'invalid components JSON' },
+            { status: 400 },
+          )
+        }
+        try {
+          const result = exportPageFromComponents(components, formatRaw)
+          return json(req, result)
+        } catch (e) {
+          if (e instanceof ExportValidationError) {
+            return json(req, { code: 'validation_error', message: e.message }, { status: 400 })
+          }
+          throw e
+        }
+      }
+
+      const pageExportZipMatch = url.pathname.match(
+        /^\/api\/v1\/projects\/([^/]+)\/pages\/([^/]+)\/export\/zip$/,
+      )
+      if (pageExportZipMatch && req.method === 'GET') {
+        const projectId = pageExportZipMatch[1]
+        const pageId = pageExportZipMatch[2]
+        const formatRaw = url.searchParams.get('format')
+        if (!formatRaw) {
+          return json(req, { code: 'validation_error', message: 'format is required' }, { status: 400 })
+        }
+        if (formatRaw !== 'html' && formatRaw !== 'react') {
+          return json(
+            req,
+            { code: 'validation_error', message: 'format must be one of: html, react' },
+            { status: 400 },
+          )
+        }
+        const row = await env.DB.prepare(
+          'SELECT components FROM pages WHERE project_id = ? AND id = ? LIMIT 1',
+        )
+          .bind(projectId, pageId)
+          .first()
+        if (!row) {
+          return json(req, { code: 'not_found', message: 'Page not found' }, { status: 404 })
+        }
+        let components: unknown
+        try {
+          components = JSON.parse((row as any).components ?? '[]')
+        } catch {
+          return json(
+            req,
+            { code: 'validation_error', message: 'invalid components JSON' },
+            { status: 400 },
+          )
+        }
+        try {
+          const zipBytes = exportPageZipFromComponents(components, formatRaw)
+          return new Response(zipBytes, {
+            status: 200,
+            headers: {
+              'content-type': 'application/zip',
+              'content-disposition': 'attachment; filename=pageforge-export.zip',
+              ...corsHeaders(req),
+            },
+          })
+        } catch (e) {
+          if (e instanceof ExportValidationError) {
+            return json(req, { code: 'validation_error', message: e.message }, { status: 400 })
+          }
+          throw e
+        }
       }
 
       return json(
