@@ -7,12 +7,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/htahta103/PageForge/backend/internal/model"
+)
+
+var (
+	scriptTagPattern  = regexp.MustCompile(`(?is)<script[\s\S]*?>[\s\S]*?</script>`)
+	styleTagPattern   = regexp.MustCompile(`(?is)<style[\s\S]*?>[\s\S]*?</style>`)
+	onAttrPattern     = regexp.MustCompile(`(?i)\s+on[a-z]+\s*=\s*(".*?"|'.*?'|[^\s>]+)`)
+	jsProtocolPattern = regexp.MustCompile(`(?i)\s+(href|src)\s*=\s*("javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)`)
 )
 
 type componentNode struct {
@@ -411,11 +420,13 @@ func renderNodeHTML(n *componentNode) string {
 		return fmt.Sprintf(`<div %s></div>`, idAttr)
 	case model.ComponentTypeVideo:
 		src := propString(n.comp.Props, "src", "url")
+		if embedSrc := resolveVideoEmbedURL(src); embedSrc != "" {
+			return fmt.Sprintf(`<div %s><div style="position:relative;width:100%%;padding-top:56.25%%;"><iframe src=%q title="Embedded video" style="position:absolute;inset:0;width:100%%;height:100%%;border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div></div>`, idAttr, embedSrc)
+		}
 		return fmt.Sprintf(`<video %s controls src=%q></video>`, idAttr, src)
 	case model.ComponentTypeCustomHTML:
-		// Custom HTML is treated as trusted export input; consumers are responsible for sanitization.
 		raw := propString(n.comp.Props, "html", "content")
-		return fmt.Sprintf(`<div %s>%s</div>`, idAttr, raw)
+		return fmt.Sprintf(`<div %s>%s</div>`, idAttr, sanitizeCustomHTML(raw))
 	default:
 		// Should not happen due to validation, but keep export robust.
 		return fmt.Sprintf(`<div %s></div>`, idAttr)
@@ -454,4 +465,75 @@ func propString(props map[string]any, keys ...string) string {
 		}
 	}
 	return ""
+}
+
+func sanitizeCustomHTML(raw string) string {
+	out := scriptTagPattern.ReplaceAllString(raw, "")
+	out = styleTagPattern.ReplaceAllString(out, "")
+	out = onAttrPattern.ReplaceAllString(out, "")
+	out = jsProtocolPattern.ReplaceAllString(out, "")
+	return strings.TrimSpace(out)
+}
+
+func resolveVideoEmbedURL(raw string) string {
+	candidate := strings.TrimSpace(raw)
+	if candidate == "" {
+		return ""
+	}
+
+	u, err := url.Parse(candidate)
+	if err != nil {
+		return ""
+	}
+
+	host := strings.ToLower(u.Hostname())
+	path := strings.Trim(u.Path, "/")
+
+	if strings.Contains(host, "youtu.be") {
+		if path != "" {
+			return "https://www.youtube.com/embed/" + path
+		}
+	}
+	if strings.Contains(host, "youtube.com") {
+		if strings.HasPrefix(path, "watch") {
+			id := u.Query().Get("v")
+			if id != "" {
+				return "https://www.youtube.com/embed/" + id
+			}
+		}
+		if strings.HasPrefix(path, "embed/") {
+			id := strings.TrimPrefix(path, "embed/")
+			if id != "" {
+				return "https://www.youtube.com/embed/" + id
+			}
+		}
+		if strings.HasPrefix(path, "shorts/") {
+			id := strings.TrimPrefix(path, "shorts/")
+			if id != "" {
+				return "https://www.youtube.com/embed/" + id
+			}
+		}
+	}
+	if strings.Contains(host, "vimeo.com") {
+		parts := strings.Split(path, "/")
+		for _, part := range parts {
+			if part == "" {
+				continue
+			}
+			if isNumeric(part) {
+				return "https://player.vimeo.com/video/" + part
+			}
+		}
+	}
+
+	return ""
+}
+
+func isNumeric(value string) bool {
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return value != ""
 }

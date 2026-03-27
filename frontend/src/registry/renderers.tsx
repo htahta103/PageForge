@@ -1,5 +1,7 @@
 import type { Component } from '@/types/api'
 import type { CSSProperties, ReactNode } from 'react'
+import { sanitizeHtml } from '@/lib/sanitizeHtml'
+import { resolveVideoEmbed } from '@/lib/videoEmbed'
 
 export function TextView({
   c,
@@ -194,6 +196,22 @@ export function SpacerView({ c, style }: { c: Component; style?: CSSProperties }
 export function VideoView({ c, style }: { c: Component; style?: CSSProperties }) {
   const src = typeof c.props.src === 'string' ? c.props.src : ''
   const poster = typeof c.props.poster === 'string' ? c.props.poster : ''
+  const embed = resolveVideoEmbed(src)
+  if (embed) {
+    return (
+      <div data-node-id={c.id} style={style}>
+        <div className="relative w-full overflow-hidden rounded-[inherit] pt-[56.25%]">
+          <iframe
+            title={`${embed.provider} video`}
+            src={embed.embedUrl}
+            className="absolute left-0 top-0 h-full w-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    )
+  }
   return (
     <video
       data-node-id={c.id}
@@ -208,12 +226,13 @@ export function VideoView({ c, style }: { c: Component; style?: CSSProperties })
 export function CustomHtmlView({ c, style }: { c: Component; style?: CSSProperties }) {
   const html = typeof c.props.html === 'string' ? c.props.html : ''
   const ariaLabel = typeof c.props.ariaLabel === 'string' ? c.props.ariaLabel : ''
+  const safeHtml = sanitizeHtml(html)
   return (
     <div
       data-node-id={c.id}
       style={style}
       aria-label={ariaLabel || undefined}
-      dangerouslySetInnerHTML={{ __html: html || '<div></div>' }}
+      dangerouslySetInnerHTML={{ __html: safeHtml || '<div></div>' }}
     />
   )
 }

@@ -168,4 +168,61 @@ func TestRenderNodeHTML_EscapesText(t *testing.T) {
 	}
 }
 
+func TestRenderNodeHTML_CustomHTMLIsSanitized(t *testing.T) {
+	id := "22222222-2222-2222-2222-222222222222"
+	n := &componentNode{
+		comp: model.ComponentJSON{
+			ID:   id,
+			Type: model.ComponentTypeCustomHTML,
+			Props: map[string]any{
+				"html": `<div onclick="alert(1)"><script>alert(1)</script><a href="javascript:alert(1)">x</a><strong>safe</strong></div>`,
+			},
+			Meta:   model.ComponentMetaJSON{Visible: ptrBool(true)},
+			Styles: model.ComponentStylesJSON{},
+		},
+	}
+
+	out := renderNodeHTML(n)
+	if strings.Contains(strings.ToLower(out), "<script") {
+		t.Fatalf("expected script tag removed")
+	}
+	if strings.Contains(strings.ToLower(out), "onclick=") {
+		t.Fatalf("expected inline handlers removed")
+	}
+	if strings.Contains(strings.ToLower(out), "javascript:") {
+		t.Fatalf("expected javascript URLs removed")
+	}
+	if !strings.Contains(out, "<strong>safe</strong>") {
+		t.Fatalf("expected safe markup retained")
+	}
+}
+
+func TestRenderNodeHTML_VideoEmbedsYouTubeAndVimeo(t *testing.T) {
+	youtube := &componentNode{
+		comp: model.ComponentJSON{
+			ID:    "33333333-3333-3333-3333-333333333333",
+			Type:  model.ComponentTypeVideo,
+			Props: map[string]any{"src": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+			Meta:  model.ComponentMetaJSON{Visible: ptrBool(true)},
+		},
+	}
+	youtubeOut := renderNodeHTML(youtube)
+	if !strings.Contains(youtubeOut, "<iframe") || !strings.Contains(youtubeOut, "youtube.com/embed/dQw4w9WgXcQ") {
+		t.Fatalf("expected youtube URLs to export as iframe embed")
+	}
+
+	vimeo := &componentNode{
+		comp: model.ComponentJSON{
+			ID:    "44444444-4444-4444-4444-444444444444",
+			Type:  model.ComponentTypeVideo,
+			Props: map[string]any{"src": "https://vimeo.com/148751763"},
+			Meta:  model.ComponentMetaJSON{Visible: ptrBool(true)},
+		},
+	}
+	vimeoOut := renderNodeHTML(vimeo)
+	if !strings.Contains(vimeoOut, "<iframe") || !strings.Contains(vimeoOut, "player.vimeo.com/video/148751763") {
+		t.Fatalf("expected vimeo URLs to export as iframe embed")
+	}
+}
+
 func ptrBool(v bool) *bool { return &v }

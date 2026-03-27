@@ -1,7 +1,31 @@
 import type { ReactNode } from 'react'
+import { useMemo } from 'react'
 
 import { useT } from '@/i18n/context'
 import { useEditorStore } from '@/store/editorStore'
+
+const ICON_OPTIONS = [
+  '★',
+  '☆',
+  '✓',
+  '✕',
+  '❤',
+  '⚡',
+  '☀',
+  '☁',
+  '☕',
+  '✉',
+  '☎',
+  '⌂',
+  '⚙',
+  '🔍',
+  '🔔',
+  '📁',
+  '📦',
+  '📅',
+  '🛒',
+  '🎯',
+] as const
 
 function Field({
   label,
@@ -25,6 +49,18 @@ export function PropertyPanel() {
     selectedId ? s.components[selectedId] : undefined,
   )
   const updateSelected = useEditorStore((s) => s.updateSelected)
+  const iconSearch = useMemo(() => {
+    if (!comp || comp.type !== 'icon') return ''
+    return String(comp.props.iconSearch ?? '')
+  }, [comp])
+  const filteredIcons = useMemo(() => {
+    const query = iconSearch.trim()
+    if (!query) return ICON_OPTIONS
+    const matching = ICON_OPTIONS.filter((glyph) => glyph.includes(query))
+    if (matching.length > 0) return matching
+    const current = String(comp?.props.glyph ?? '')
+    return current ? [current] : ICON_OPTIONS
+  }, [comp, iconSearch])
 
   if (!comp) {
     return (
@@ -201,12 +237,28 @@ export function PropertyPanel() {
 
       {comp.type === 'icon' && (
         <>
-          <Field label={t('prop.icon.glyph')}>
+          <Field label="Search icon">
             <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={iconSearch}
+              onChange={(e) =>
+                updateSelected({ props: { iconSearch: e.target.value } })
+              }
+              placeholder="Type a symbol, e.g. ★"
+            />
+          </Field>
+          <Field label={t('prop.icon.glyph')}>
+            <select
               className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
               value={String(comp.props.glyph ?? '')}
               onChange={(e) => updateSelected({ props: { glyph: e.target.value } })}
-            />
+            >
+              {filteredIcons.map((glyph) => (
+                <option key={glyph} value={glyph}>
+                  {glyph}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label={t('prop.a11y.ariaLabel')}>
             <input
