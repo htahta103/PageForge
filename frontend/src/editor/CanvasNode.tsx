@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core'
-import { useMemo } from 'react'
+import { useContext, useEffect, useMemo, useRef } from 'react'
 
 import { useT } from '@/i18n/context'
 import {
@@ -21,6 +21,8 @@ import { resolveComponentStyles } from '@/lib/styles'
 import { getSortedChildrenIds } from '@/lib/tree'
 import { useEditorStore } from '@/store/editorStore'
 
+import { CanvasDragContext } from './Canvas'
+
 export function CanvasNode({ id }: { id: string }) {
   const t = useT()
   const components = useEditorStore((s) => s.components)
@@ -32,6 +34,14 @@ export function CanvasNode({ id }: { id: string }) {
   const select = useEditorStore((s) => s.select)
   const selected = useEditorStore((s) => s.selectedIds.includes(id))
   const bp = useEditorStore((s) => s.activeBreakpoint)
+  const nudgeSelectedPosition = useEditorStore((s) => s.nudgeSelectedPosition)
+  const dragCtx = useContext(CanvasDragContext)
+  const dragRef = useRef<{
+    pointerId: number
+    lastX: number
+    lastY: number
+    moved: boolean
+  } | null>(null)
 
   const canHaveChildren =
     comp?.type === 'container' ||
@@ -43,10 +53,6 @@ export function CanvasNode({ id }: { id: string }) {
     disabled: !canHaveChildren,
   })
 
-  if (!comp) return null
-  const style = resolveComponentStyles(comp, bp)
-  if (!comp.meta.visible) return null
-
   const ring = selected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
   const hover = canHaveChildren && isOver ? 'bg-blue-50/50' : ''
   const children = (
@@ -57,13 +63,59 @@ export function CanvasNode({ id }: { id: string }) {
     </div>
   )
 
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const drag = dragRef.current
+      if (!drag || e.pointerId !== drag.pointerId) return
+      const dx = e.clientX - drag.lastX
+      const dy = e.clientY - drag.lastY
+      if (dx === 0 && dy === 0) return
+      drag.lastX = e.clientX
+      drag.lastY = e.clientY
+      drag.moved = true
+      nudgeSelectedPosition(dx, dy)
+      dragCtx?.updateGuides(id)
+    }
+
+    const onUp = (e: PointerEvent) => {
+      const drag = dragRef.current
+      if (!drag || e.pointerId !== drag.pointerId) return
+      dragRef.current = null
+      dragCtx?.endDrag()
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+  }, [dragCtx, id, nudgeSelectedPosition])
+
+  if (!comp) return null
+  const style = resolveComponentStyles(comp, bp)
+  if (!comp.meta.visible) return null
+
   return (
     <div
       ref={canHaveChildren ? setNodeRef : undefined}
       className={['rounded-md', ring, hover].join(' ')}
       onClick={(e) => {
         e.stopPropagation()
+        if (dragRef.current?.moved) return
         select([id])
+      }}
+      onPointerDown={(e) => {
+        if (e.button !== 0 || !selected || comp.meta.locked) return
+        dragRef.current = {
+          pointerId: e.pointerId,
+          lastX: e.clientX,
+          lastY: e.clientY,
+          moved: false,
+        }
+        dragCtx?.beginDrag(id)
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -72,6 +124,7 @@ export function CanvasNode({ id }: { id: string }) {
           select([id])
         }
       }}
+      data-canvas-node-id={id}
       role="button"
       tabIndex={0}
     >

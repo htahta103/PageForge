@@ -53,6 +53,7 @@ interface EditorActions {
     activeId: string,
     overId: string,
   ) => void
+  nudgeSelectedPosition: (dx: number, dy: number, gridSize?: number) => void
 }
 
 const initialEditorState: EditorState = {
@@ -65,6 +66,12 @@ const initialEditorState: EditorState = {
   activeBreakpoint: 'desktop',
   loadState: { status: 'idle' },
   saveState: { status: 'idle' },
+}
+
+function parsePx(raw: string | undefined): number {
+  if (!raw) return 0
+  const value = Number.parseFloat(raw)
+  return Number.isFinite(value) ? value : 0
 }
 
 export const useEditorStore = create<EditorState & EditorActions>()(
@@ -229,6 +236,36 @@ export const useEditorStore = create<EditorState & EditorActions>()(
             }
           }
           return { components: map }
+        })
+      },
+
+      nudgeSelectedPosition: (dx, dy, gridSize = 8) => {
+        if (dx === 0 && dy === 0) return
+        set((s) => {
+          const next = { ...s.components }
+          for (const id of s.selectedIds) {
+            const node = next[id]
+            if (!node || node.meta.locked) continue
+            const base = node.styles.base ?? {}
+            const left = parsePx(base.marginLeft)
+            const top = parsePx(base.marginTop)
+            const targetLeft = left + dx
+            const targetTop = top + dy
+            const snappedLeft = Math.round(targetLeft / gridSize) * gridSize
+            const snappedTop = Math.round(targetTop / gridSize) * gridSize
+            next[id] = {
+              ...node,
+              styles: {
+                ...node.styles,
+                base: {
+                  ...base,
+                  marginLeft: `${snappedLeft}px`,
+                  marginTop: `${snappedTop}px`,
+                },
+              },
+            }
+          }
+          return { components: next }
         })
       },
     }),
