@@ -19,8 +19,8 @@ export function Canvas() {
     <div
       ref={setNodeRef}
       className={[
-        'min-h-[480px] rounded-xl border-2 border-dashed border-neutral-300 bg-white p-4',
-        isOver ? 'border-blue-400 bg-blue-50/40' : '',
+        'glass-panel min-h-[480px] border-2 border-dashed border-white/60 p-4 transition-colors',
+        isOver ? 'border-blue-400 bg-blue-50/60' : '',
       ].join(' ')}
       data-testid="editor-canvas"
       onClick={() => select([])}

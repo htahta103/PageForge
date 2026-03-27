@@ -47,7 +47,7 @@ export function CanvasNode({ id }: { id: string }) {
   const style = resolveComponentStyles(comp, bp)
   if (!comp.meta.visible) return null
 
-  const ring = selected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+  const ring = selected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-blue-50/20' : ''
   const hover = canHaveChildren && isOver ? 'bg-blue-50/50' : ''
   const children = (
     <div className="flex flex-col gap-2">
@@ -60,7 +60,7 @@ export function CanvasNode({ id }: { id: string }) {
   return (
     <div
       ref={canHaveChildren ? setNodeRef : undefined}
-      className={['rounded-md', ring, hover].join(' ')}
+      className={['rounded-md transition-all duration-200', ring, hover].join(' ')}
       onClick={(e) => {
         e.stopPropagation()
         select([id])

@@ -14,6 +14,7 @@ import { findParentId } from '@/lib/tree'
 import { getRegistration } from '@/registry'
 import { useEditorStore, useTemporalEditor } from '@/store/editorStore'
 import type { ComponentType } from '@/types/api'
+import { Skeleton } from '@/components/Skeleton'
 
 import { Canvas } from './Canvas'
 import { ComponentPalette } from './ComponentPalette'
@@ -103,8 +104,10 @@ export function EditorScreen() {
 
   if (loadState.status === 'loading') {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-white p-6 text-sm text-neutral-600">
-        {t('editor.loading')}
+      <div className="glass-panel space-y-3 p-6">
+        <Skeleton className="h-5 w-44" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     )
   }
@@ -115,7 +118,7 @@ export function EditorScreen() {
         <div>{t('editor.loadError')}</div>
         <button
           type="button"
-          className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-red-800 ring-1 ring-red-200"
+          className="interactive-control rounded-md bg-white px-3 py-1.5 text-sm font-medium text-red-800 ring-1 ring-red-200"
           onClick={() => void load(projectId, pageId)}
         >
           {t('common.retry')}
@@ -143,7 +146,7 @@ export function EditorScreen() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-neutral-200 bg-white p-1">
+            <div className="glass-panel flex p-1">
               {(
                 [
                   ['desktop', 'editor.breakpoint.desktop'],
@@ -156,7 +159,7 @@ export function EditorScreen() {
                   type="button"
                   onClick={() => setBreakpoint(bp)}
                   className={[
-                    'rounded-md px-2 py-1 text-xs font-medium',
+                    'interactive-control rounded-md px-2 py-1 text-xs font-medium',
                     activeBreakpoint === bp
                       ? 'bg-neutral-900 text-white'
                       : 'text-neutral-700 hover:bg-neutral-50',
@@ -169,35 +172,35 @@ export function EditorScreen() {
 
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="interactive-control rounded-md border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-sm hover:bg-neutral-50"
               onClick={() => temporal.getState().undo()}
             >
               {t('editor.undo')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="interactive-control rounded-md border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-sm hover:bg-neutral-50"
               onClick={() => temporal.getState().redo()}
             >
               {t('editor.redo')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="interactive-control rounded-md border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-sm hover:bg-neutral-50"
               onClick={() => void deleteSelected()}
             >
               {t('common.delete')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="interactive-control rounded-md border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-sm hover:bg-neutral-50"
               onClick={() => void onExport('html')}
             >
               {t('editor.export.html')}
             </button>
             <button
               type="button"
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm hover:bg-neutral-50"
+              className="interactive-control rounded-md border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-sm hover:bg-neutral-50"
               onClick={() => void onExport('react')}
             >
               {t('editor.export.react')}
@@ -205,7 +208,7 @@ export function EditorScreen() {
 
             <button
               type="button"
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              className="interactive-control rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
               disabled={saveState.status === 'saving'}
               onClick={() => void save()}
               data-testid="editor-save"
@@ -227,10 +230,10 @@ export function EditorScreen() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <aside className="lg:col-span-3 space-y-4">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="glass-panel p-4">
               <ComponentPalette />
             </div>
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="glass-panel p-4">
               <LayerTree />
             </div>
           </aside>
@@ -240,7 +243,7 @@ export function EditorScreen() {
           </section>
 
           <aside className="lg:col-span-3">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="glass-panel p-4">
               <PropertyPanel />
             </div>
           </aside>

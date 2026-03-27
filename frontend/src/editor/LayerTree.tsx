@@ -41,14 +41,14 @@ function SortableRow({
         ref={setNodeRef}
         style={style}
         className={[
-          'flex items-center gap-2 rounded-md border px-2 py-1 text-sm',
+          'flex items-center gap-2 rounded-md border px-2 py-1 text-sm transition-all duration-200',
           selected ? 'border-blue-400 bg-blue-50' : 'border-neutral-200 bg-white',
           isDragging ? 'opacity-70' : '',
         ].join(' ')}
       >
         <button
           type="button"
-          className="cursor-grab text-neutral-400 hover:text-neutral-700"
+          className="interactive-control cursor-grab rounded px-1 text-neutral-400 hover:text-neutral-700"
           aria-label={t('editor.layers.dragHandle')}
           {...attributes}
           {...listeners}
@@ -57,7 +57,7 @@ function SortableRow({
         </button>
         <button
           type="button"
-          className="flex-1 truncate text-left font-medium text-neutral-800"
+          className="interactive-control flex-1 truncate rounded px-1 text-left font-medium text-neutral-800"
           onClick={() => select([id])}
         >
           {component.meta.name}
@@ -115,7 +115,7 @@ export function LayerTree() {
       <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
         {t('editor.layers.title')}
       </div>
-      <div className="rounded-lg border border-neutral-200 bg-white p-2">
+      <div className="glass-panel p-2">
         {hasRoots ? (
           <LayerGroup parentId={null} depth={0} />
         ) : (

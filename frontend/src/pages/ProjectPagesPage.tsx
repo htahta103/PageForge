@@ -6,6 +6,7 @@ import { createPage, listPages } from '@/lib/api/pages'
 import { getProject } from '@/lib/api/projects'
 import type { MessageKey } from '@/i18n/en'
 import type { PageSummary, Project } from '@/types/api'
+import { Skeleton } from '@/components/Skeleton'
 
 export function ProjectPagesPage() {
   const t = useT()
@@ -91,7 +92,7 @@ export function ProjectPagesPage() {
 
       <form
         onSubmit={onCreate}
-        className="rounded-xl border border-neutral-200 bg-white p-4"
+        className="glass-panel p-4"
         data-testid="pages-create-form"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -100,7 +101,7 @@ export function ProjectPagesPage() {
               {t('pages.nameLabel')}
             </div>
             <input
-              className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-3 py-2 text-sm"
               value={name}
               placeholder={t('pages.namePlaceholder')}
               onChange={(e) => setName(e.target.value)}
@@ -113,7 +114,7 @@ export function ProjectPagesPage() {
           <button
             type="submit"
             disabled={creating}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="interactive-control rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             data-testid="pages-create-button"
           >
             {creating ? t('pages.creating') : t('pages.create')}
@@ -122,20 +123,24 @@ export function ProjectPagesPage() {
       </form>
 
       {loading ? (
-        <div className="text-sm text-neutral-600">{t('editor.loading')}</div>
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+        </div>
       ) : error ? (
         <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           <div>{t('pages.loadError')}</div>
           <button
             type="button"
-            className="rounded-md bg-white px-3 py-1.5 text-sm ring-1 ring-red-200"
+            className="interactive-control rounded-md bg-white px-3 py-1.5 text-sm ring-1 ring-red-200"
             onClick={() => void refresh()}
           >
             {t('common.retry')}
           </button>
         </div>
       ) : pages.length === 0 ? (
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600">
+        <div className="glass-panel p-6 text-sm text-neutral-600">
           {t('pages.empty')}
         </div>
       ) : (
@@ -143,14 +148,14 @@ export function ProjectPagesPage() {
           {pages.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white p-4"
+              className="glass-panel flex items-center justify-between gap-3 p-4"
             >
               <div>
                 <div className="font-semibold text-neutral-900">{p.name}</div>
                 <div className="mt-1 text-xs text-neutral-500">{p.slug}</div>
               </div>
               <Link
-                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+                className="interactive-control rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
                 to={`/projects/${projectId}/pages/${p.id}/edit`}
                 data-testid={`pages-open-editor-${p.id}`}
               >

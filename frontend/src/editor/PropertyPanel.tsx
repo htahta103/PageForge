@@ -45,7 +45,7 @@ export function PropertyPanel() {
 
       <Field label={t('prop.meta.name')}>
         <input
-          className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+          className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
           value={comp.meta.name}
           onChange={(e) =>
             updateSelected({ meta: { name: e.target.value } })
@@ -56,7 +56,7 @@ export function PropertyPanel() {
       {comp.type === 'text' && (
         <Field label={t('prop.text.body')}>
           <textarea
-            className="min-h-[96px] w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            className="interactive-control min-h-[96px] w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
             value={String(comp.props.text ?? '')}
             onChange={(e) => updateSelected({ props: { text: e.target.value } })}
           />
@@ -66,7 +66,7 @@ export function PropertyPanel() {
       {comp.type === 'button' && (
         <Field label={t('prop.button.label')}>
           <input
-            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
             value={String(comp.props.label ?? '')}
             onChange={(e) =>
               updateSelected({ props: { label: e.target.value } })
@@ -79,7 +79,7 @@ export function PropertyPanel() {
         <>
           <Field label={t('prop.input.placeholder')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.placeholder ?? '')}
               onChange={(e) =>
                 updateSelected({ props: { placeholder: e.target.value } })
@@ -88,14 +88,14 @@ export function PropertyPanel() {
           </Field>
           <Field label={t('prop.input.name')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.name ?? '')}
               onChange={(e) => updateSelected({ props: { name: e.target.value } })}
             />
           </Field>
           <Field label={t('prop.input.type')}>
             <select
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.inputType ?? 'text')}
               onChange={(e) =>
                 updateSelected({ props: { inputType: e.target.value } })
@@ -116,7 +116,7 @@ export function PropertyPanel() {
         <>
           <Field label={t('prop.image.src')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.src ?? '')}
               onChange={(e) =>
                 updateSelected({ props: { src: e.target.value } })
@@ -125,7 +125,7 @@ export function PropertyPanel() {
           </Field>
           <Field label={t('prop.image.alt')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.alt ?? '')}
               onChange={(e) =>
                 updateSelected({ props: { alt: e.target.value } })
@@ -139,7 +139,7 @@ export function PropertyPanel() {
         <Field label={t('prop.styles.minHeight')}>
           <input
             type="number"
-            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
             value={parseInt(comp.styles.base.minHeight ?? '80', 10) || 80}
             onChange={(e) =>
               updateSelected({
@@ -154,7 +154,7 @@ export function PropertyPanel() {
         <>
           <Field label={t('prop.card.title')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.title ?? '')}
               onChange={(e) => updateSelected({ props: { title: e.target.value } })}
             />
@@ -162,7 +162,7 @@ export function PropertyPanel() {
           <Field label={t('prop.styles.minHeight')}>
             <input
               type="number"
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={parseInt(comp.styles.base.minHeight ?? '80', 10) || 80}
               onChange={(e) =>
                 updateSelected({
@@ -177,7 +177,7 @@ export function PropertyPanel() {
       {comp.type === 'nav' && (
         <Field label={t('prop.nav.brand')}>
           <input
-            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
             value={String(comp.props.brand ?? '')}
             onChange={(e) => updateSelected({ props: { brand: e.target.value } })}
           />
@@ -187,7 +187,7 @@ export function PropertyPanel() {
       {comp.type === 'list' && (
         <Field label={t('prop.list.ordered')}>
           <select
-            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
             value={String(Boolean(comp.props.ordered))}
             onChange={(e) =>
               updateSelected({ props: { ordered: e.target.value === 'true' } })
@@ -203,14 +203,14 @@ export function PropertyPanel() {
         <>
           <Field label={t('prop.icon.glyph')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.glyph ?? '')}
               onChange={(e) => updateSelected({ props: { glyph: e.target.value } })}
             />
           </Field>
           <Field label={t('prop.a11y.ariaLabel')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.ariaLabel ?? '')}
               onChange={(e) =>
                 updateSelected({ props: { ariaLabel: e.target.value } })
@@ -224,7 +224,7 @@ export function PropertyPanel() {
         <Field label={t('prop.spacer.height')}>
           <input
             type="number"
-            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+            className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
             value={parseInt(String(comp.props.height ?? '24'), 10) || 24}
             onChange={(e) =>
               updateSelected({
@@ -240,14 +240,14 @@ export function PropertyPanel() {
         <>
           <Field label={t('prop.video.src')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.src ?? '')}
               onChange={(e) => updateSelected({ props: { src: e.target.value } })}
             />
           </Field>
           <Field label={t('prop.video.poster')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.poster ?? '')}
               onChange={(e) =>
                 updateSelected({ props: { poster: e.target.value } })
@@ -261,14 +261,14 @@ export function PropertyPanel() {
         <>
           <Field label={t('prop.customHtml.html')}>
             <textarea
-              className="min-h-[120px] w-full rounded-md border border-neutral-200 px-2 py-1 font-mono text-xs"
+              className="interactive-control min-h-[120px] w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 font-mono text-xs"
               value={String(comp.props.html ?? '')}
               onChange={(e) => updateSelected({ props: { html: e.target.value } })}
             />
           </Field>
           <Field label={t('prop.a11y.ariaLabel')}>
             <input
-              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-2 py-1 text-sm"
               value={String(comp.props.ariaLabel ?? '')}
               onChange={(e) =>
                 updateSelected({ props: { ariaLabel: e.target.value } })

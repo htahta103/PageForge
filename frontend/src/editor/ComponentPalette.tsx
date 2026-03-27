@@ -30,7 +30,7 @@ function PaletteTile({
       {...listeners}
       {...attributes}
       className={[
-        'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-medium shadow-sm',
+        'interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-3 py-2 text-left text-sm font-medium shadow-sm',
         'hover:border-neutral-300 hover:bg-neutral-50',
         isDragging ? 'opacity-70' : '',
       ].join(' ')}

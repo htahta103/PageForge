@@ -5,6 +5,7 @@ import { useT } from '@/i18n/context'
 import { listProjects, createProject } from '@/lib/api/projects'
 import type { MessageKey } from '@/i18n/en'
 import type { ProjectSummary } from '@/types/api'
+import { Skeleton } from '@/components/Skeleton'
 
 export function ProjectsPage() {
   const t = useT()
@@ -70,7 +71,7 @@ export function ProjectsPage() {
 
       <form
         onSubmit={onCreate}
-        className="rounded-xl border border-neutral-200 bg-white p-4"
+        className="glass-panel p-4"
         data-testid="projects-create-form"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -79,7 +80,7 @@ export function ProjectsPage() {
               {t('projects.nameLabel')}
             </div>
             <input
-              className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="interactive-control w-full rounded-md border border-neutral-200/80 bg-white/80 px-3 py-2 text-sm"
               value={name}
               placeholder={t('projects.namePlaceholder')}
               onChange={(e) => setName(e.target.value)}
@@ -92,7 +93,7 @@ export function ProjectsPage() {
           <button
             type="submit"
             disabled={creating}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="interactive-control rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             data-testid="projects-create-button"
           >
             {creating ? t('projects.creating') : t('projects.create')}
@@ -101,20 +102,26 @@ export function ProjectsPage() {
       </form>
 
       {loading ? (
-        <div className="text-sm text-neutral-600">{t('editor.loading')}</div>
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-40" />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+        </div>
       ) : error ? (
         <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           <div>{t('projects.loadError')}</div>
           <button
             type="button"
-            className="rounded-md bg-white px-3 py-1.5 text-sm ring-1 ring-red-200"
+            className="interactive-control rounded-md bg-white px-3 py-1.5 text-sm ring-1 ring-red-200"
             onClick={() => void refresh()}
           >
             {t('common.retry')}
           </button>
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600">
+        <div className="glass-panel p-6 text-sm text-neutral-600">
           {t('projects.empty')}
         </div>
       ) : (
@@ -125,7 +132,7 @@ export function ProjectsPage() {
           {items.map((p) => (
             <div
               key={p.id}
-              className="rounded-xl border border-neutral-200 bg-white p-4"
+              className="glass-panel p-4"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -135,7 +142,7 @@ export function ProjectsPage() {
                   </div>
                 </div>
                 <Link
-                  className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
+                  className="interactive-control rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
                   to={`/projects/${p.id}`}
                   data-testid={`projects-open-${p.id}`}
                 >
