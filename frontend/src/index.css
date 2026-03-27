@@ -1,3 +1,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: theme(fontFamily.sans);
+  }
+}
+
+@layer components {
+  .pf-panel {
+    @apply rounded-xl border border-neutral-200/60 bg-white/70 backdrop-blur-xl shadow-sm;
+  }
+
+  .pf-panel-pad {
+    @apply p-4;
+  }
+
+  .pf-btn {
+    @apply rounded-md border border-neutral-200/70 bg-white/70 px-3 py-1.5 text-sm font-medium text-neutral-800 backdrop-blur transition;
+    @apply hover:bg-white/85 hover:shadow-sm active:scale-[0.99];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2;
+  }
+
+  .pf-btn-primary {
+    @apply border-blue-600/30 bg-blue-600 text-white;
+    @apply hover:bg-blue-700 active:bg-blue-700;
+  }
+
+  .pf-skeleton {
+    @apply rounded-md bg-[linear-gradient(90deg,theme(colors.neutral.200),theme(colors.neutral.100),theme(colors.neutral.200))];
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+}
