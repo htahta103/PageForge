@@ -365,6 +365,10 @@ func renderNodeHTML(n *componentNode) string {
 		return fmt.Sprintf(`<img %s src=%q alt=%q />`, idAttr, src, alt)
 	case model.ComponentTypeButton:
 		label := propString(n.comp.Props, "text", "label", "value")
+		href := strings.TrimSpace(propString(n.comp.Props, "href"))
+		if href != "" {
+			return fmt.Sprintf(`<a %s href=%q>%s</a>`, idAttr, href, html.EscapeString(label))
+		}
 		return fmt.Sprintf(`<button %s type="button">%s</button>`, idAttr, html.EscapeString(label))
 	case model.ComponentTypeContainer, model.ComponentTypeCard:
 		tag := "div"

@@ -70,6 +70,7 @@ export const en = {
   'prop.meta.name': 'Layer name',
   'prop.text.body': 'Text',
   'prop.button.label': 'Label',
+  'prop.button.href': 'Link URL',
   'prop.input.placeholder': 'Placeholder',
   'prop.input.name': 'Field name',
   'prop.input.type': 'Input type',

@@ -142,6 +142,51 @@ func TestGenerateScopedCSS_ResponsiveAndCamelCase(t *testing.T) {
 	}
 }
 
+func TestRenderNodeHTML_ButtonWithHrefUsesAnchor(t *testing.T) {
+	id := "22222222-2222-2222-2222-222222222222"
+	n := &componentNode{
+		comp: model.ComponentJSON{
+			ID:   id,
+			Type: model.ComponentTypeButton,
+			Props: map[string]any{
+				"label": "Go",
+				"href":  "https://example.com/path?q=1",
+			},
+			Meta:   model.ComponentMetaJSON{Visible: ptrBool(true)},
+			Styles: model.ComponentStylesJSON{},
+		},
+	}
+	out := renderNodeHTML(n)
+	if !strings.Contains(out, `<a `) || !strings.Contains(out, `href="https://example.com/path?q=1"`) {
+		t.Fatalf("expected anchor with href, got %q", out)
+	}
+	if strings.Contains(out, "<button") {
+		t.Fatalf("expected link, not button")
+	}
+}
+
+func TestRenderNodeHTML_ButtonWithoutHrefUsesButton(t *testing.T) {
+	id := "33333333-3333-3333-3333-333333333333"
+	n := &componentNode{
+		comp: model.ComponentJSON{
+			ID:   id,
+			Type: model.ComponentTypeButton,
+			Props: map[string]any{
+				"label": "OK",
+			},
+			Meta:   model.ComponentMetaJSON{Visible: ptrBool(true)},
+			Styles: model.ComponentStylesJSON{},
+		},
+	}
+	out := renderNodeHTML(n)
+	if !strings.Contains(out, "<button ") {
+		t.Fatalf("expected button element, got %q", out)
+	}
+	if strings.Contains(out, "<a ") {
+		t.Fatalf("expected plain button without href")
+	}
+}
+
 func TestRenderNodeHTML_EscapesText(t *testing.T) {
 	id := "11111111-1111-1111-1111-111111111111"
 	n := &componentNode{

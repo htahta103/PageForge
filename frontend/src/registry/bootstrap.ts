@@ -28,7 +28,7 @@ const image: Registration = {
 const button: Registration = {
   type: 'button',
   labelKey: 'palette.button',
-  defaultProps: { label: 'Button' },
+  defaultProps: { label: 'Button', href: '' },
   defaultStyles: {
     base: {
       padding: '8px 12px',

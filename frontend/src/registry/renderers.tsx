@@ -24,6 +24,24 @@ export function ButtonView({
   style?: CSSProperties
 }) {
   const label = typeof c.props.label === 'string' ? c.props.label : 'Button'
+  const hrefRaw = typeof c.props.href === 'string' ? c.props.href : ''
+  const href = hrefRaw.trim()
+  if (href) {
+    return (
+      <a
+        data-node-id={c.id}
+        href={href}
+        style={style}
+        className="cursor-pointer text-center no-underline"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+      >
+        {label}
+      </a>
+    )
+  }
   return (
     <button
       data-node-id={c.id}

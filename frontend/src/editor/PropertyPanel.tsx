@@ -64,15 +64,27 @@ export function PropertyPanel() {
       )}
 
       {comp.type === 'button' && (
-        <Field label={t('prop.button.label')}>
-          <input
-            className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
-            value={String(comp.props.label ?? '')}
-            onChange={(e) =>
-              updateSelected({ props: { label: e.target.value } })
-            }
-          />
-        </Field>
+        <>
+          <Field label={t('prop.button.label')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              value={String(comp.props.label ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { label: e.target.value } })
+              }
+            />
+          </Field>
+          <Field label={t('prop.button.href')}>
+            <input
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-sm"
+              placeholder="https://"
+              value={String(comp.props.href ?? '')}
+              onChange={(e) =>
+                updateSelected({ props: { href: e.target.value } })
+              }
+            />
+          </Field>
+        </>
       )}
 
       {comp.type === 'input' && (
