@@ -94,3 +94,6 @@ Key endpoints:
 - `GET/POST /api/v1/projects/:id/pages` — List/create pages
 - `GET/PUT/DELETE /api/v1/projects/:id/pages/:id` — Page CRUD with component tree
 - `GET /api/v1/projects/:id/pages/:id/export?format=html|react` — Export page
+
+
+<!-- Security scan triggered at 2026-09-05 07:29:21 -->
